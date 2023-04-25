@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.2">Jekyll</generator><link href="https://fedemengo.github.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://fedemengo.github.io/" rel="alternate" type="text/html" hreflang="en" /><updated>2023-04-25T13:55:14+00:00</updated><id>https://fedemengo.github.io/feed.xml</id><title type="html">fedemengo</title><entry><title type="html">How I made nvim 300x faster</title><link href="https://fedemengo.github.io/blog/2023/04/nvim-evil-regex/" rel="alternate" type="text/html" title="How I made nvim 300x faster" /><published>2023-04-23T00:00:00+00:00</published><updated>2023-04-23T00:00:00+00:00</updated><id>https://fedemengo.github.io/blog/2023/04/nvim-evil-regex</id><content type="html" xml:base="https://fedemengo.github.io/blog/2023/04/nvim-evil-regex/"><![CDATA[<h2 id="intro">Intro</h2>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.2">Jekyll</generator><link href="https://fedemengo.github.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://fedemengo.github.io/" rel="alternate" type="text/html" hreflang="en" /><updated>2023-04-25T14:07:37+00:00</updated><id>https://fedemengo.github.io/feed.xml</id><title type="html">fedemengo</title><entry><title type="html">How I made nvim 300x faster</title><link href="https://fedemengo.github.io/blog/2023/04/nvim-evil-regex/" rel="alternate" type="text/html" title="How I made nvim 300x faster" /><published>2023-04-23T00:00:00+00:00</published><updated>2023-04-23T00:00:00+00:00</updated><id>https://fedemengo.github.io/blog/2023/04/nvim-evil-regex</id><content type="html" xml:base="https://fedemengo.github.io/blog/2023/04/nvim-evil-regex/"><![CDATA[<h2 id="intro">Intro</h2>
 
 <p>For a while, I’ve been working on a side <a href="https://github.com/fedemengo/d2bist">project</a> that generates files with many 0s and 1s. As nvim is my primary editor, I frequently need to check or modify the contents of these files. However, to my great annoyance, whenever the files contained more than, let’s say, tens of thousands of bit characters, nvim would hang for several seconds, minutes, or until I would SIGKILL it.</p>
 
@@ -467,13 +467,13 @@ window.addEventListener('load', () => {
 
   <picture>
     
-    <source class="responsive-img-srcset" media="(max-width: 480px)" srcset="/assets/img/posts/prt_files/poincare-recurrence-time_8_0-480.webp" />
-    <source class="responsive-img-srcset" media="(max-width: 800px)" srcset="/assets/img/posts/prt_files/poincare-recurrence-time_8_0-800.webp" />
-    <source class="responsive-img-srcset" media="(max-width: 1400px)" srcset="/assets/img/posts/prt_files/poincare-recurrence-time_8_0-1400.webp" />
+    <source class="responsive-img-srcset" media="(max-width: 480px)" srcset="/assets/img/blog/2022-10-27/poincare-recurrence-time_8_0-480.webp" />
+    <source class="responsive-img-srcset" media="(max-width: 800px)" srcset="/assets/img/blog/2022-10-27/poincare-recurrence-time_8_0-800.webp" />
+    <source class="responsive-img-srcset" media="(max-width: 1400px)" srcset="/assets/img/blog/2022-10-27/poincare-recurrence-time_8_0-1400.webp" />
     
 
     <!-- Fallback to the original file -->
-    <img src="/assets/img/posts/prt_files/poincare-recurrence-time_8_0.png" class="img-fluid rounded z-depth-1" width="auto" height="auto" data-zoomable="" onerror="this.onerror=null; $('.responsive-img-srcset').remove();" />
+    <img src="/assets/img/blog/2022-10-27/poincare-recurrence-time_8_0.png" class="img-fluid rounded " width="auto" height="auto" data-zoomable="" onerror="this.onerror=null; $('.responsive-img-srcset').remove();" />
 
   </picture>
 
@@ -1056,13 +1056,13 @@ rule124 took 1.1915581226348877
 
   <picture>
     
-    <source class="responsive-img-srcset" media="(max-width: 480px)" srcset="/assets/img/posts/prt_files/poincare-recurrence-time_11_0-480.webp" />
-    <source class="responsive-img-srcset" media="(max-width: 800px)" srcset="/assets/img/posts/prt_files/poincare-recurrence-time_11_0-800.webp" />
-    <source class="responsive-img-srcset" media="(max-width: 1400px)" srcset="/assets/img/posts/prt_files/poincare-recurrence-time_11_0-1400.webp" />
+    <source class="responsive-img-srcset" media="(max-width: 480px)" srcset="/assets/img/blog/2022-10-27/poincare-recurrence-time_11_0-480.webp" />
+    <source class="responsive-img-srcset" media="(max-width: 800px)" srcset="/assets/img/blog/2022-10-27/poincare-recurrence-time_11_0-800.webp" />
+    <source class="responsive-img-srcset" media="(max-width: 1400px)" srcset="/assets/img/blog/2022-10-27/poincare-recurrence-time_11_0-1400.webp" />
     
 
     <!-- Fallback to the original file -->
-    <img src="/assets/img/posts/prt_files/poincare-recurrence-time_11_0.png" class="img-fluid rounded z-depth-1" width="auto" height="auto" onerror="this.onerror=null; $('.responsive-img-srcset').remove();" />
+    <img src="/assets/img/blog/2022-10-27/poincare-recurrence-time_11_0.png" class="img-fluid rounded " width="auto" height="auto" onerror="this.onerror=null; $('.responsive-img-srcset').remove();" />
 
   </picture>
 
@@ -1099,13 +1099,13 @@ rule124 took 1.1915581226348877
 
   <picture>
     
-    <source class="responsive-img-srcset" media="(max-width: 480px)" srcset="/assets/img/posts/prt_files/poincare-recurrence-time_13_0-480.webp" />
-    <source class="responsive-img-srcset" media="(max-width: 800px)" srcset="/assets/img/posts/prt_files/poincare-recurrence-time_13_0-800.webp" />
-    <source class="responsive-img-srcset" media="(max-width: 1400px)" srcset="/assets/img/posts/prt_files/poincare-recurrence-time_13_0-1400.webp" />
+    <source class="responsive-img-srcset" media="(max-width: 480px)" srcset="/assets/img/blog/2022-10-27/poincare-recurrence-time_13_0-480.webp" />
+    <source class="responsive-img-srcset" media="(max-width: 800px)" srcset="/assets/img/blog/2022-10-27/poincare-recurrence-time_13_0-800.webp" />
+    <source class="responsive-img-srcset" media="(max-width: 1400px)" srcset="/assets/img/blog/2022-10-27/poincare-recurrence-time_13_0-1400.webp" />
     
 
     <!-- Fallback to the original file -->
-    <img src="/assets/img/posts/prt_files/poincare-recurrence-time_13_0.png" class="img-fluid rounded z-depth-1" width="auto" height="auto" onerror="this.onerror=null; $('.responsive-img-srcset').remove();" />
+    <img src="/assets/img/blog/2022-10-27/poincare-recurrence-time_13_0.png" class="img-fluid rounded " width="auto" height="auto" onerror="this.onerror=null; $('.responsive-img-srcset').remove();" />
 
   </picture>
 
@@ -1137,13 +1137,13 @@ rule124 took 1.1915581226348877
 
   <picture>
     
-    <source class="responsive-img-srcset" media="(max-width: 480px)" srcset="/assets/img/posts/prt_files/poincare-recurrence-time_16_0-480.webp" />
-    <source class="responsive-img-srcset" media="(max-width: 800px)" srcset="/assets/img/posts/prt_files/poincare-recurrence-time_16_0-800.webp" />
-    <source class="responsive-img-srcset" media="(max-width: 1400px)" srcset="/assets/img/posts/prt_files/poincare-recurrence-time_16_0-1400.webp" />
+    <source class="responsive-img-srcset" media="(max-width: 480px)" srcset="/assets/img/blog/2022-10-27/poincare-recurrence-time_16_0-480.webp" />
+    <source class="responsive-img-srcset" media="(max-width: 800px)" srcset="/assets/img/blog/2022-10-27/poincare-recurrence-time_16_0-800.webp" />
+    <source class="responsive-img-srcset" media="(max-width: 1400px)" srcset="/assets/img/blog/2022-10-27/poincare-recurrence-time_16_0-1400.webp" />
     
 
     <!-- Fallback to the original file -->
-    <img src="/assets/img/posts/prt_files/poincare-recurrence-time_16_0.png" class="img-fluid rounded z-depth-1" width="auto" height="auto" data-zoomable="" onerror="this.onerror=null; $('.responsive-img-srcset').remove();" />
+    <img src="/assets/img/blog/2022-10-27/poincare-recurrence-time_16_0.png" class="img-fluid rounded " width="auto" height="auto" data-zoomable="" onerror="this.onerror=null; $('.responsive-img-srcset').remove();" />
 
   </picture>
 
@@ -1165,13 +1165,13 @@ rule124 took 1.1915581226348877
 
   <picture>
     
-    <source class="responsive-img-srcset" media="(max-width: 480px)" srcset="/assets/img/posts/prt_files/poincare-recurrence-time_17_1-480.webp" />
-    <source class="responsive-img-srcset" media="(max-width: 800px)" srcset="/assets/img/posts/prt_files/poincare-recurrence-time_17_1-800.webp" />
-    <source class="responsive-img-srcset" media="(max-width: 1400px)" srcset="/assets/img/posts/prt_files/poincare-recurrence-time_17_1-1400.webp" />
+    <source class="responsive-img-srcset" media="(max-width: 480px)" srcset="/assets/img/blog/2022-10-27/poincare-recurrence-time_17_1-480.webp" />
+    <source class="responsive-img-srcset" media="(max-width: 800px)" srcset="/assets/img/blog/2022-10-27/poincare-recurrence-time_17_1-800.webp" />
+    <source class="responsive-img-srcset" media="(max-width: 1400px)" srcset="/assets/img/blog/2022-10-27/poincare-recurrence-time_17_1-1400.webp" />
     
 
     <!-- Fallback to the original file -->
-    <img src="/assets/img/posts/prt_files/poincare-recurrence-time_17_1.png" class="img-fluid rounded z-depth-1" width="auto" height="auto" data-zoomable="" onerror="this.onerror=null; $('.responsive-img-srcset').remove();" />
+    <img src="/assets/img/blog/2022-10-27/poincare-recurrence-time_17_1.png" class="img-fluid rounded " width="auto" height="auto" data-zoomable="" onerror="this.onerror=null; $('.responsive-img-srcset').remove();" />
 
   </picture>
 
@@ -1193,13 +1193,13 @@ rule124 took 1.1915581226348877
 
   <picture>
     
-    <source class="responsive-img-srcset" media="(max-width: 480px)" srcset="/assets/img/posts/prt_files/poincare-recurrence-time_19_0-480.webp" />
-    <source class="responsive-img-srcset" media="(max-width: 800px)" srcset="/assets/img/posts/prt_files/poincare-recurrence-time_19_0-800.webp" />
-    <source class="responsive-img-srcset" media="(max-width: 1400px)" srcset="/assets/img/posts/prt_files/poincare-recurrence-time_19_0-1400.webp" />
+    <source class="responsive-img-srcset" media="(max-width: 480px)" srcset="/assets/img/blog/2022-10-27/poincare-recurrence-time_19_0-480.webp" />
+    <source class="responsive-img-srcset" media="(max-width: 800px)" srcset="/assets/img/blog/2022-10-27/poincare-recurrence-time_19_0-800.webp" />
+    <source class="responsive-img-srcset" media="(max-width: 1400px)" srcset="/assets/img/blog/2022-10-27/poincare-recurrence-time_19_0-1400.webp" />
     
 
     <!-- Fallback to the original file -->
-    <img src="/assets/img/posts/prt_files/poincare-recurrence-time_19_0.png" class="img-fluid rounded z-depth-1" width="auto" height="auto" data-zoomable="" onerror="this.onerror=null; $('.responsive-img-srcset').remove();" />
+    <img src="/assets/img/blog/2022-10-27/poincare-recurrence-time_19_0.png" class="img-fluid rounded " width="auto" height="auto" data-zoomable="" onerror="this.onerror=null; $('.responsive-img-srcset').remove();" />
 
   </picture>
 
@@ -1219,13 +1219,13 @@ rule124 took 1.1915581226348877
 
   <picture>
     
-    <source class="responsive-img-srcset" media="(max-width: 480px)" srcset="/assets/img/posts/prt_files/poincare-recurrence-time_21_0-480.webp" />
-    <source class="responsive-img-srcset" media="(max-width: 800px)" srcset="/assets/img/posts/prt_files/poincare-recurrence-time_21_0-800.webp" />
-    <source class="responsive-img-srcset" media="(max-width: 1400px)" srcset="/assets/img/posts/prt_files/poincare-recurrence-time_21_0-1400.webp" />
+    <source class="responsive-img-srcset" media="(max-width: 480px)" srcset="/assets/img/blog/2022-10-27/poincare-recurrence-time_21_0-480.webp" />
+    <source class="responsive-img-srcset" media="(max-width: 800px)" srcset="/assets/img/blog/2022-10-27/poincare-recurrence-time_21_0-800.webp" />
+    <source class="responsive-img-srcset" media="(max-width: 1400px)" srcset="/assets/img/blog/2022-10-27/poincare-recurrence-time_21_0-1400.webp" />
     
 
     <!-- Fallback to the original file -->
-    <img src="/assets/img/posts/prt_files/poincare-recurrence-time_21_0.png" class="img-fluid rounded z-depth-1" width="auto" height="auto" data-zoomable="" onerror="this.onerror=null; $('.responsive-img-srcset').remove();" />
+    <img src="/assets/img/blog/2022-10-27/poincare-recurrence-time_21_0.png" class="img-fluid rounded " width="auto" height="auto" data-zoomable="" onerror="this.onerror=null; $('.responsive-img-srcset').remove();" />
 
   </picture>
 
@@ -1238,13 +1238,13 @@ rule124 took 1.1915581226348877
 
   <picture>
     
-    <source class="responsive-img-srcset" media="(max-width: 480px)" srcset="/assets/img/posts/prt_files/poincare-recurrence-time_22_0-480.webp" />
-    <source class="responsive-img-srcset" media="(max-width: 800px)" srcset="/assets/img/posts/prt_files/poincare-recurrence-time_22_0-800.webp" />
-    <source class="responsive-img-srcset" media="(max-width: 1400px)" srcset="/assets/img/posts/prt_files/poincare-recurrence-time_22_0-1400.webp" />
+    <source class="responsive-img-srcset" media="(max-width: 480px)" srcset="/assets/img/blog/2022-10-27/poincare-recurrence-time_22_0-480.webp" />
+    <source class="responsive-img-srcset" media="(max-width: 800px)" srcset="/assets/img/blog/2022-10-27/poincare-recurrence-time_22_0-800.webp" />
+    <source class="responsive-img-srcset" media="(max-width: 1400px)" srcset="/assets/img/blog/2022-10-27/poincare-recurrence-time_22_0-1400.webp" />
     
 
     <!-- Fallback to the original file -->
-    <img src="/assets/img/posts/prt_files/poincare-recurrence-time_22_0.png" class="img-fluid rounded z-depth-1" width="auto" height="auto" data-zoomable="" onerror="this.onerror=null; $('.responsive-img-srcset').remove();" />
+    <img src="/assets/img/blog/2022-10-27/poincare-recurrence-time_22_0.png" class="img-fluid rounded " width="auto" height="auto" data-zoomable="" onerror="this.onerror=null; $('.responsive-img-srcset').remove();" />
 
   </picture>
 
