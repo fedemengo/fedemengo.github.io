@@ -34,13 +34,20 @@
     
     <link rel="stylesheet" href="/assets/css/main.css">
     <link rel="canonical" href="https://fedemengo.github.io/blog/2023/04/nvim-evil-regex/">
-    
+
     <!-- Dark Mode -->
     
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jwarby/jekyll-pygments-themes@master/native.css" media="none" id="highlight_theme_dark">
 
     <script src="/assets/js/theme.js"></script>
     <script src="/assets/js/dark_mode.js"></script>
+
+    <!-- Online 3D Viewer -->
+    <script src="/assets/js/o3dv/o3dv.min.js"></script>
+    <script>
+        OV.SetExternalLibLocation ('libs'); // tell the engine where to find the libs folder
+        OV.Init3DViewerElements (); // init all viewers on the page
+    </script>
     
 
   </head>
@@ -292,7 +299,7 @@ curr: 'TAK 2000', Time: 0.000s. next: 'S Y S T E M S   I M P R O V E D '
 curr: 'S Y S T E M S   I M P R O V E D ', Time: 0.000s. next: 'Run Date: '
 </code></pre></div></div>
 
-<p>The regex <code class="language-plaintext highlighter-rouge">[0-9:%.]* *execve%(</code> equivalent to <code class="language-plaintext highlighter-rouge">[0-9:.]* *execve(</code> without regex escape chars took \(\approx 4.4\) seconds to evaluate, which is crazy considering all the other regexes evaluated instantly. I’m no expert in regexes but I think the issues is with a backtracking explosion. Remember the <a href="https://en.wikipedia.org/wiki/String-searching_algorithm#Naive_string_search" rel="external nofollow noopener" target="_blank">naive string matching</a>?</p>
+<p>The regex <code class="language-plaintext highlighter-rouge">[0-9:%.]* *execve%(</code> equivalent to <code class="language-plaintext highlighter-rouge">[0-9:.]* *execve(</code> without regex escape chars took \(\approx 4.4\) seconds to evaluate, which is crazy considering all the other regexes evaluated instantly. I’m no expert in regexes but I think the issues is with a backtracking explosion. Remember the <a href="https://en.wikipedia.org/wiki/String-searching_algorithm#Naive_string_search" rel="external nofollow noopener" target="_blank">naive string searching</a>?</p>
 
 <p>Anyway, the trend was close to quadratic, on paper the regex had to perform \(\sum_{i=1}^N i = \frac{N(N+1)}{2} = O(N^2)\) matches.</p>
 
@@ -382,6 +389,18 @@ sys     0m0.000s
   
 
   <li class="my-2">
+    <a class="text-pink-700 underline font-semibold hover:text-pink-800" href="/blog/2022/10/visualizing-cellular-automata/">Visualizing cellular automata</a>
+  </li>
+
+  
+
+  <li class="my-2">
+    <a class="text-pink-700 underline font-semibold hover:text-pink-800" href="/blog/2022/10/poincare-recurrence-time/">Poincaré recurrence time in cellular automata</a>
+  </li>
+
+  
+
+  <li class="my-2">
     <a class="text-pink-700 underline font-semibold hover:text-pink-800" href="/blog/2021/01/tomtom-spark-linux/">TomTom Spark on Linux</a>
   </li>
 
@@ -395,18 +414,6 @@ sys     0m0.000s
 
   <li class="my-2">
     <a class="text-pink-700 underline font-semibold hover:text-pink-800" href="/blog/2019/09/web-crawler/">Designing an efficient webcrawler</a>
-  </li>
-
-  
-
-  <li class="my-2">
-    <a class="text-pink-700 underline font-semibold hover:text-pink-800" href="/blog/2019/06/limit-mem-usage/">Limit process memory usage on Linux</a>
-  </li>
-
-  
-
-  <li class="my-2">
-    <a class="text-pink-700 underline font-semibold hover:text-pink-800" href="/blog/2019/01/FastBFT/">Scalable Byzantine Consensus via Hardware-assisted Secrete Sharing</a>
   </li>
 
 </div>

@@ -34,13 +34,20 @@
     
     <link rel="stylesheet" href="/assets/css/main.css">
     <link rel="canonical" href="https://fedemengo.github.io/blog/2018/08/manjaro-on-x1/">
-    
+
     <!-- Dark Mode -->
     
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jwarby/jekyll-pygments-themes@master/native.css" media="none" id="highlight_theme_dark">
 
     <script src="/assets/js/theme.js"></script>
     <script src="/assets/js/dark_mode.js"></script>
+
+    <!-- Online 3D Viewer -->
+    <script src="/assets/js/o3dv/o3dv.min.js"></script>
+    <script>
+        OV.SetExternalLibLocation ('libs'); // tell the engine where to find the libs folder
+        OV.Init3DViewerElements (); // init all viewers on the page
+    </script>
     
 
   </head>
@@ -248,6 +255,18 @@ EndSection
   
 
   <li class="my-2">
+    <a class="text-pink-700 underline font-semibold hover:text-pink-800" href="/blog/2022/10/visualizing-cellular-automata/">Visualizing cellular automata</a>
+  </li>
+
+  
+
+  <li class="my-2">
+    <a class="text-pink-700 underline font-semibold hover:text-pink-800" href="/blog/2022/10/poincare-recurrence-time/">Poincaré recurrence time in cellular automata</a>
+  </li>
+
+  
+
+  <li class="my-2">
     <a class="text-pink-700 underline font-semibold hover:text-pink-800" href="/blog/2021/01/tomtom-spark-linux/">TomTom Spark on Linux</a>
   </li>
 
@@ -255,18 +274,6 @@ EndSection
 
   <li class="my-2">
     <a class="text-pink-700 underline font-semibold hover:text-pink-800" href="/blog/2020/11/ssh-local-forwarding/">SSH Local Forwarding</a>
-  </li>
-
-  
-
-  <li class="my-2">
-    <a class="text-pink-700 underline font-semibold hover:text-pink-800" href="/blog/2019/09/web-crawler/">Designing an efficient webcrawler</a>
-  </li>
-
-  
-
-  <li class="my-2">
-    <a class="text-pink-700 underline font-semibold hover:text-pink-800" href="/blog/2019/06/limit-mem-usage/">Limit process memory usage on Linux</a>
   </li>
 
 </div>

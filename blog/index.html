@@ -34,13 +34,20 @@
     
     <link rel="stylesheet" href="/assets/css/main.css">
     <link rel="canonical" href="https://fedemengo.github.io/blog/">
-    
+
     <!-- Dark Mode -->
     
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jwarby/jekyll-pygments-themes@master/native.css" media="none" id="highlight_theme_dark" />
 
     <script src="/assets/js/theme.js"></script>
     <script src="/assets/js/dark_mode.js"></script>
+
+    <!-- Online 3D Viewer -->
+    <script src="/assets/js/o3dv/o3dv.min.js"></script>
+    <script>
+        OV.SetExternalLibLocation ('libs'); // tell the engine where to find the libs folder
+        OV.Init3DViewerElements (); // init all viewers on the page
+    </script>
     
 
   </head>
@@ -167,6 +174,80 @@
     <li>
       <h3>
         
+          <a class="post-title" href="/blog/2022/10/visualizing-cellular-automata/">Visualizing cellular automata</a>
+        
+      </h3>
+      <p></p>
+      <p class="post-meta">
+        7 min read &nbsp; &middot; &nbsp;
+        October 28, 2022
+      </p>
+      <p class="post-tags">
+        <a href="/blog/2022">
+          <i class="fas fa-calendar fa-sm"></i> 2022 </a>
+
+          
+          &nbsp; &middot; &nbsp;
+            
+            <a href="/blog/tag/computation">
+              <i class="fas fa-hashtag fa-sm"></i> computation</a> &nbsp;
+              
+            <a href="/blog/tag/automata">
+              <i class="fas fa-hashtag fa-sm"></i> automata</a> &nbsp;
+              
+          
+
+          
+    </p>
+    </li>
+
+    
+
+    
+    
+    
+    
+
+    <li>
+      <h3>
+        
+          <a class="post-title" href="/blog/2022/10/poincare-recurrence-time/">Poincaré recurrence time in cellular automata</a>
+        
+      </h3>
+      <p>Exploring the asimptotical behavior of CA</p>
+      <p class="post-meta">
+        16 min read &nbsp; &middot; &nbsp;
+        October 27, 2022
+      </p>
+      <p class="post-tags">
+        <a href="/blog/2022">
+          <i class="fas fa-calendar fa-sm"></i> 2022 </a>
+
+          
+          &nbsp; &middot; &nbsp;
+            
+            <a href="/blog/tag/computation">
+              <i class="fas fa-hashtag fa-sm"></i> computation</a> &nbsp;
+              
+            <a href="/blog/tag/automata">
+              <i class="fas fa-hashtag fa-sm"></i> automata</a> &nbsp;
+              
+          
+
+          
+    </p>
+    </li>
+
+    
+
+    
+    
+    
+    
+
+    <li>
+      <h3>
+        
           <a class="post-title" href="/blog/2021/01/tomtom-spark-linux/">TomTom Spark on Linux</a>
         
       </h3>
@@ -232,74 +313,6 @@
     </li>
 
     
-
-    
-    
-    
-    
-
-    <li>
-      <h3>
-        
-          <a class="post-title" href="/blog/2019/09/web-crawler/">Designing an efficient webcrawler</a>
-        
-      </h3>
-      <p>What's powering every search engine?</p>
-      <p class="post-meta">
-        7 min read &nbsp; &middot; &nbsp;
-        September 17, 2019
-      </p>
-      <p class="post-tags">
-        <a href="/blog/2019">
-          <i class="fas fa-calendar fa-sm"></i> 2019 </a>
-
-          
-
-          
-          &nbsp; &middot; &nbsp;
-            
-            <a href="/blog/category/system-design">
-              <i class="fas fa-tag fa-sm"></i> system-design</a> &nbsp;
-              
-          
-    </p>
-    </li>
-
-    
-
-    
-    
-    
-    
-
-    <li>
-      <h3>
-        
-          <a class="post-title" href="/blog/2019/06/limit-mem-usage/">Limit process memory usage on Linux</a>
-        
-      </h3>
-      <p>How to use cgroups</p>
-      <p class="post-meta">
-        3 min read &nbsp; &middot; &nbsp;
-        June 25, 2019
-      </p>
-      <p class="post-tags">
-        <a href="/blog/2019">
-          <i class="fas fa-calendar fa-sm"></i> 2019 </a>
-
-          
-
-          
-          &nbsp; &middot; &nbsp;
-            
-            <a href="/blog/category/linux">
-              <i class="fas fa-tag fa-sm"></i> linux</a> &nbsp;
-              
-          
-    </p>
-    </li>
-
-    
   </ul>
 
   <nav aria-label="Blog page naviation">
@@ -310,6 +323,7 @@
       <li class="page-item "><a class="page-link" href="/blog/page/2/index.html" title="blog - page 2">2</a></li>
       <li class="page-item "><a class="page-link" href="/blog/page/3/index.html" title="blog - page 3">3</a></li>
       <li class="page-item "><a class="page-link" href="/blog/page/4/index.html" title="blog - page 4">4</a></li>
+      <li class="page-item "><a class="page-link" href="/blog/page/5/index.html" title="blog - page 5">5</a></li>
       <li class="page-item ">
       <a class="page-link" href="/blog/page/2/">Older</a>
     </li>
