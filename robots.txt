@@ -1,0 +1,4 @@
+User-agent: *
+Disallow:
+
+Sitemap: https://fedemengo.github.io/sitemap.xml
