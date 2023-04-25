@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.2">Jekyll</generator><link href="https://fedemengo.github.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://fedemengo.github.io/" rel="alternate" type="text/html" hreflang="en" /><updated>2023-04-25T09:25:45+00:00</updated><id>https://fedemengo.github.io/feed.xml</id><title type="html">fedemengo</title><entry><title type="html">How I made nvim 300x faster</title><link href="https://fedemengo.github.io/blog/2023/04/nvim-evil-regex/" rel="alternate" type="text/html" title="How I made nvim 300x faster" /><published>2023-04-23T00:00:00+00:00</published><updated>2023-04-23T00:00:00+00:00</updated><id>https://fedemengo.github.io/blog/2023/04/nvim-evil-regex</id><content type="html" xml:base="https://fedemengo.github.io/blog/2023/04/nvim-evil-regex/"><![CDATA[<h2 id="intro">Intro</h2>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.2">Jekyll</generator><link href="https://fedemengo.github.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://fedemengo.github.io/" rel="alternate" type="text/html" hreflang="en" /><updated>2023-04-25T13:09:04+00:00</updated><id>https://fedemengo.github.io/feed.xml</id><title type="html">fedemengo</title><entry><title type="html">How I made nvim 300x faster</title><link href="https://fedemengo.github.io/blog/2023/04/nvim-evil-regex/" rel="alternate" type="text/html" title="How I made nvim 300x faster" /><published>2023-04-23T00:00:00+00:00</published><updated>2023-04-23T00:00:00+00:00</updated><id>https://fedemengo.github.io/blog/2023/04/nvim-evil-regex</id><content type="html" xml:base="https://fedemengo.github.io/blog/2023/04/nvim-evil-regex/"><![CDATA[<h2 id="intro">Intro</h2>
 
 <p>For a while, I’ve been working on a side <a href="https://github.com/fedemengo/d2bist">project</a> that generates files with many 0s and 1s. As nvim is my primary editor, I frequently need to check or modify the contents of these files. However, to my great annoyance, whenever the files contained more than, let’s say, tens of thousands of bit characters, nvim would hang for several seconds, minutes, or until I would SIGKILL it.</p>
 
@@ -177,7 +177,7 @@ curr: 'S Y S T E M S   I M P R O V E D ', Time: 0.000s. next: 'Run Date: '
     
 
     <!-- Fallback to the original file -->
-    <img src="/assets/img/blog/2023-04-23/nvim-plot.png" class="img-fluid rounded z-depth-1" width="auto" height="auto" data-zoomable="" onerror="this.onerror=null; $('.responsive-img-srcset').remove();" />
+    <img src="/assets/img/blog/2023-04-23/nvim-plot.png" class="img-fluid rounded" width="auto" height="auto" onerror="this.onerror=null; $('.responsive-img-srcset').remove();" />
 
   </picture>
 
@@ -234,4 +234,638 @@ sys     0m0.000s
 
 <p>It made me appreciate open source and hate regex even more! After this was done I started to wonder if a tool to <a href="https://en.wikipedia.org/wiki/NFA_minimization">simplify</a> regexes exists and how <a href="https://cstheory.blogoverflow.com/2011/08/on-learning-regular-languages/">difficult</a> it would be to make one. Maybe I’ll give it a shot.</p>
 
-<p>Another interesting way to investigate slow downs in nvim that I found is <a href="https://github.com/stevearc/profile.nvim">this</a> amazing profiling plugin. In case <code class="language-plaintext highlighter-rouge">--startuptime</code> doesn’t give enough or any actionable information.</p>]]></content><author><name></name></author><category term="debugging" /><category term="vim" /><category term="nvim" /><category term="regex" /><summary type="html"><![CDATA[Tracking down an evil regex in vim and neovim]]></summary></entry></feed>
+<p>Another interesting way to investigate slow downs in nvim that I found is <a href="https://github.com/stevearc/profile.nvim">this</a> amazing profiling plugin. In case <code class="language-plaintext highlighter-rouge">--startuptime</code> doesn’t give enough or any actionable information.</p>]]></content><author><name></name></author><category term="debugging" /><category term="vim" /><category term="nvim" /><category term="regex" /><summary type="html"><![CDATA[Tracking down an evil regex in vim and neovim]]></summary></entry><entry><title type="html">TomTom Spark on Linux</title><link href="https://fedemengo.github.io/blog/2021/01/tomtom-spark-linux/" rel="alternate" type="text/html" title="TomTom Spark on Linux" /><published>2021-01-07T00:00:00+00:00</published><updated>2021-01-07T00:00:00+00:00</updated><id>https://fedemengo.github.io/blog/2021/01/tomtom-spark-linux</id><content type="html" xml:base="https://fedemengo.github.io/blog/2021/01/tomtom-spark-linux/"><![CDATA[<p>I use a TomTom Spark 3 to track my sport activities and I love it. The only problem with that is that it’s a pretty old watch, TomTom discontinued the sport series so there is not so much support for it anymore.</p>
+
+<p>I have the Cardio + Music version which allows to upload up ~4GB of audio to listen during my workouts. It’s great, in theory.</p>
+
+<p>The truth is that I was never able to have the TomTom app upload the audio data to my watch. So, after spending some time trying to figure out the problem I found a solution.</p>
+
+<p>The watch it’s just a usb! It’s only necessary to mount it</p>
+
+<figure>
+
+  <picture>
+    
+    <source class="responsive-img-srcset" media="(max-width: 480px)" srcset="/assets/img/blog/2021-01-07/mount-480.webp" />
+    <source class="responsive-img-srcset" media="(max-width: 800px)" srcset="/assets/img/blog/2021-01-07/mount-800.webp" />
+    <source class="responsive-img-srcset" media="(max-width: 1400px)" srcset="/assets/img/blog/2021-01-07/mount-1400.webp" />
+    
+
+    <!-- Fallback to the original file -->
+    <img src="/assets/img/blog/2021-01-07/mount.png" class="img-fluid centered" width="auto" height="auto" onerror="this.onerror=null; $('.responsive-img-srcset').remove();" />
+
+  </picture>
+
+</figure>
+
+<p>And put the audio files as well as the the <code class="language-plaintext highlighter-rouge">.m3u8</code> playlist in the folder <code class="language-plaintext highlighter-rouge">MySportsConnect/Music/</code></p>
+
+<p>To do that I create a simple script that generates all the playlist. Let’s assume you have 3 folders <code class="language-plaintext highlighter-rouge">podcast</code>, <code class="language-plaintext highlighter-rouge">music</code>, <code class="language-plaintext highlighter-rouge">lectures</code> with audio inside each of them. You would just need to run the script at the same level of these folders. The script will create a <code class="language-plaintext highlighter-rouge">masterplaylist.m3u8</code> at the top level and a <code class="language-plaintext highlighter-rouge">.m3u8</code> playlist in each folder.</p>
+
+<p><a href="https://ibiblio.org/mp3info/">mp3info</a> is require to extract the file duration</p>
+
+<figure class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="c">#!/bin/bash</span>
+
+<span class="nv">masterPL</span><span class="o">=</span><span class="s2">"masterplaylist.m3u8"</span>
+<span class="nb">echo</span> <span class="s2">"#TTPLAYLIST"</span> <span class="o">&gt;</span> <span class="nv">$masterPL</span>
+
+<span class="k">for </span><span class="nb">dir </span><span class="k">in</span> <span class="k">*</span><span class="p">;</span>
+<span class="k">do
+    if</span> <span class="o">[</span> <span class="nt">-d</span> <span class="s2">"</span><span class="nv">$dir</span><span class="s2">"</span> <span class="o">]</span><span class="p">;</span> <span class="k">then
+        </span><span class="nv">name</span><span class="o">=</span><span class="si">$(</span><span class="nb">echo</span> <span class="nv">$dir</span> | <span class="nb">sed</span> <span class="nt">-E</span> <span class="s1">'s/^(.)/\U\1/g'</span><span class="si">)</span>
+        <span class="nv">plFile</span><span class="o">=</span><span class="s2">"</span><span class="nv">$dir</span><span class="s2">/</span><span class="nv">$name</span><span class="s2">.m3u8"</span>
+        <span class="nb">echo</span> <span class="s2">"#EXTM3U"</span> <span class="o">&gt;</span> <span class="nv">$plFile</span>
+        <span class="nb">echo</span> <span class="s2">"#TTPLAYLIST_NAME:</span><span class="nv">$name</span><span class="s2">"</span> <span class="o">&gt;&gt;</span> <span class="nv">$plFile</span>
+        <span class="k">for </span>file <span class="k">in</span> <span class="s2">"</span><span class="nv">$dir</span><span class="s2">/"</span><span class="k">*</span>.mp3<span class="p">;</span>
+        <span class="k">do
+        	</span><span class="nb">echo</span> <span class="s2">"#EXTINF:"</span><span class="si">$(</span>mp3info <span class="nt">-p</span> <span class="s2">"%S"</span> <span class="s2">"</span><span class="nv">$file</span><span class="s2">"</span><span class="si">)</span><span class="s2">","</span><span class="k">${</span><span class="nv">file</span><span class="p">/</span><span class="s2">"</span><span class="nv">$dir</span><span class="s2">/"</span><span class="p">/</span><span class="k">}</span><span class="s2">""</span>
+        	<span class="nb">echo</span> <span class="k">${</span><span class="nv">file</span><span class="p">/</span><span class="s2">"</span><span class="nv">$dir</span><span class="s2">/"</span><span class="p">/</span><span class="k">}</span><span class="p">;</span>
+        <span class="k">done</span> <span class="o">&gt;&gt;</span> <span class="nv">$plFile</span>
+
+        <span class="nb">echo</span> <span class="s2">"#NAME:</span><span class="nv">$name</span><span class="s2">"</span> <span class="o">&gt;&gt;</span> <span class="nv">$masterPL</span>
+        <span class="nb">echo</span> <span class="s2">"</span><span class="nv">$plFile</span><span class="s2">"</span> <span class="o">&gt;&gt;</span> <span class="nv">$masterPL</span>
+    <span class="k">fi
+done</span></code></pre></figure>
+
+<p>Finally you can just copy everything over to <code class="language-plaintext highlighter-rouge">MySportsConnect/Music/</code>. Beware that the copying process might terminates rather quickly. In my case the umount process took a while, because the files were still syncing.</p>]]></content><author><name></name></author><category term="unix" /><summary type="html"><![CDATA[Load audio files using the command line]]></summary></entry><entry><title type="html">SSH Local Forwarding</title><link href="https://fedemengo.github.io/blog/2020/11/ssh-local-forwarding/" rel="alternate" type="text/html" title="SSH Local Forwarding" /><published>2020-11-04T00:00:00+00:00</published><updated>2020-11-04T00:00:00+00:00</updated><id>https://fedemengo.github.io/blog/2020/11/ssh-local-forwarding</id><content type="html" xml:base="https://fedemengo.github.io/blog/2020/11/ssh-local-forwarding/"><![CDATA[<p>Earlier todays I was configuring <a href="https://rclone.org/">rclone</a> on my raspberry to backup my document on Google Drive. As I was giving permission to rclone to access Drive apis I was asked this</p>
+
+<figure>
+
+  <picture>
+    
+    <source class="responsive-img-srcset" media="(max-width: 480px)" srcset="/assets/img/blog/2020-11-04/prompt-480.webp" />
+    <source class="responsive-img-srcset" media="(max-width: 800px)" srcset="/assets/img/blog/2020-11-04/prompt-800.webp" />
+    <source class="responsive-img-srcset" media="(max-width: 1400px)" srcset="/assets/img/blog/2020-11-04/prompt-1400.webp" />
+    
+
+    <!-- Fallback to the original file -->
+    <img src="/assets/img/blog/2020-11-04/prompt.png" class="img-fluid centered" width="auto" height="auto" onerror="this.onerror=null; $('.responsive-img-srcset').remove();" />
+
+  </picture>
+
+</figure>
+
+<p>I’m ssh-ed in the raspberry, which is running a very light distribution of raspbian without a X11 server, so it doesn’t have a GUI. But I needed to access the url in order to login to my google account and allow the app access to my account.</p>
+
+<p>I tried connecting on my laptop to <code class="language-plaintext highlighter-rouge">http://raspberry-address:53682/auth?state=2EL7gU5-kcVEAMC2w6QHPg</code> but of course it wasn’t working, I tried to <strong>curl</strong> and <strong>wget</strong> <code class="language-plaintext highlighter-rouge">http://127.0.0.1:53682/auth?state=2EL7gU5-kcVEAMC2w6QHPg</code>, a step in the right direction but not quite (I used this to authenticate other app that just required me to access the url).</p>
+
+<p>Then I tried a ssh trick that I used in other occasion <code class="language-plaintext highlighter-rouge">ssh -X blahblah</code> but of course there was no X11 server to forward. That’s when I remembered reading about <strong>ssh forwarding</strong>. I never thought I would use it in the future but here I was.</p>
+
+<h4 id="ssh-local-forwarding">SSH Local Forwarding</h4>
+
+<p>The idea is straightforward, you can forward all your local request on a specific port to another port on your remote machine.
+For example if I were to <code class="language-plaintext highlighter-rouge">ssh -L 12345:127.0.0.1:54321 user@remote-address</code> I could make request on my local machine (using browser or cli) to <code class="language-plaintext highlighter-rouge">localhost:12345</code> and ssh would forward those request to <code class="language-plaintext highlighter-rouge">127.0.0.1:54321</code> on the remote machine and forward the response back to my machine.</p>
+
+<p>In my case I was able to authenticate my app by using <code class="language-plaintext highlighter-rouge">ssh -L 12345:127.0.0.1:53682 user@raspberry-address</code> and the accessing <code class="language-plaintext highlighter-rouge">http://127.0.0.1:12345/auth?state=2EL7gU5-kcVEAMC2w6QHPg</code> with my browser.</p>
+
+<p>Another useful feature that ssh provides on top of the most famous <code class="language-plaintext highlighter-rouge">sftp</code> and <code class="language-plaintext highlighter-rouge">scp</code></p>]]></content><author><name></name></author><category term="networking" /><category term="unix" /><summary type="html"><![CDATA[Tunneling through SSH]]></summary></entry><entry><title type="html">Designing an efficient webcrawler</title><link href="https://fedemengo.github.io/blog/2019/09/web-crawler/" rel="alternate" type="text/html" title="Designing an efficient webcrawler" /><published>2019-09-17T00:00:00+00:00</published><updated>2019-09-17T00:00:00+00:00</updated><id>https://fedemengo.github.io/blog/2019/09/web-crawler</id><content type="html" xml:base="https://fedemengo.github.io/blog/2019/09/web-crawler/"><![CDATA[<h2 id="terminology">Terminology</h2>
+
+<ul>
+  <li>Web crawlers generally start from a <strong>seed</strong> web page and can collect data form many more pages by following all outgoing links <!--more--></li>
+  <li>Web crawlers can be <strong>exhaustive</strong> or <strong>topical/focused</strong> depending on the pages they will inspect (follow one topic, follow pages newer than a given data and so on..)</li>
+  <li>A crawling strategy can be selective on the maximum number of pages to fetch: <strong>short</strong> vs <strong>long crawls</strong></li>
+</ul>
+
+<h2 id="architecture">Architecture</h2>
+
+<h3 id="components">Components</h3>
+
+<ul>
+  <li>Frontier</li>
+  <li>Fetcher</li>
+  <li>Parser
+    <ul>
+      <li>url extractor</li>
+      <li>url filtering</li>
+      <li>url prioritizer</li>
+    </ul>
+  </li>
+  <li>Storage</li>
+</ul>
+
+<p>In addition to those component, that consists of the bare minium for a simple crawler,  a distributed web crawler will require  a url distributor that will take care of assigning url to each crawler (right after extracting them) based on on the respective locality.</p>
+
+<h4 id="frontier">Frontier</h4>
+
+<p>A <strong>frontier/open-list</strong> (list of unvisited urls) is initialized with a seed and store all the unvisited urls. Can be an in-memory data structure for small crawlers while it usually stores the urls on disk for large scale systems. It’s necessary to avoid adding duplicates to the frontier, so a separate hash-table or Bloom filter can be used to avoid the problem. When the frontier reaches it’s maximum capacity, only <strong>one</strong> new url can be added from the current page. Urls extracted from a page are generally assigned a score depending on their importance according to the crawling strategy.</p>
+
+<p>It may happens that the frontier contains many urls that point to the same or similar page, this problem is referred to as the <strong>spider-trap</strong>. In this case it’s reasonable to only accept \(k\) urls for the same domain every \(n\) urls processed.crawcraw</p>
+
+<p>When urls are assigned a crawling priority it useful to implement the frontier as priority queue. The problem when using a disk-based priority queue is that is necessary to rearrange elements periodically and that would results in many disk seeks, consequentially limiting the number of insertion per second.</p>
+
+<p>A possible solution is to discretize the priority and have as many frontier as interval of priority.</p>
+
+<h4 id="fetching">Fetching</h4>
+
+<p>An http client is necessary to fetch a webpage. It needs to be configured with a timeout (to avoid wasting waiting for a response too long), it has to to inspect the header of page (for redirection, last modified date and so on). Before fetching a page from a new host, the crawler should check for a <code class="language-plaintext highlighter-rouge">robots.txt</code> file that inform the crawler to skip specific urls.</p>
+
+<p>In a distributed crawler it’s important to avoid issuing multiple overlapping request to the same server (denial-of-service), to do this one solution could be to map a domain to a single crawling unit. Another way to avoid sending too many requests consists on adding a delay before requesting another page form the same domain (for example 10 times the time it took to download the last page); in real implementation there is generally just one frontier per worker and many backend frontiers (in the url distributor), each one assigned to a specific domain.</p>
+
+<p>Other data-structure used to improved the performances of a crawler are the robot.txt cache and the DNS cache.</p>
+
+<h4 id="parsing">Parsing</h4>
+
+<p>A <strong>crawling loop</strong> fetch the next url in the frontier, extract application specific data and add the page’urls to the frontier.</p>
+
+<p>Before adding new urls to a page, such url need to be <strong>canonicalized</strong> meaning it’s necessary to transform the url applying certain criteria, the key is applying them consistently</p>
+
+<ul>
+  <li>Convert protocol and hostname to lowercase</li>
+  <li>Remove anchor or references</li>
+  <li>Perform url-encoding of special characters</li>
+  <li>Add trailing <code class="language-plaintext highlighter-rouge">/</code> when necessary (<code class="language-plaintext highlighter-rouge">x.y</code> and <code class="language-plaintext highlighter-rouge">x.y/</code>)</li>
+  <li>Remove default web pages (<code class="language-plaintext highlighter-rouge">x.y/</code> and <code class="language-plaintext highlighter-rouge">x.y/index.html</code>)</li>
+  <li>Resolve local path</li>
+  <li>Leave port number unless is port <code class="language-plaintext highlighter-rouge">80</code> (default)</li>
+  <li>Known mirrors</li>
+  <li>Consider limiting the url size to 128/256 characters</li>
+</ul>
+
+<p>When extracting data from a page, it’s a good practice to <strong>stoplist</strong> (remove common stop works) and <strong>stem</strong> (conflate words to a common root).</p>
+
+<p>In the case of a distributed crawler that partitions the url space among each replica, it’s important to have a mean to send an extracted url to the appropriate instance: this can be achieved with p2p communication (consistent hashing/DHT or using a central source of urls distribution)</p>
+
+<h2 id="algorithms">Algorithms</h2>
+
+<h3 id="naive-best-first-crawler">Naive Best-First crawler</h3>
+
+<p>Each fetched page is represented as list of words weighted by their frequency, it then computes the similarity between the page and the description provided by the user. A similarity function can be</p>
+
+\[sim(q, p) = \dfrac{Vq \cdot{ Vp}}{\mid\mid Vq\mid\mid \cdot \mid\mid Vq \mid\mid}\]
+
+<p>Where \(Vq, Vp\) are the term frequency vector for query and fetched page and \(\mid\mid v \mid\mid\) is the Euclidean norm of the vector \(v\)</p>
+
+<h3 id="sharksearch">SharkSearch</h3>
+
+<p>This algorithm uses the anchor-text, anchor context and inherited scores to assigned a more refined score by also keeping track of the value of the pages on a path (if such pages are not important it stops crawling down the path, a depth bound is also used as upper bound). The following function can be used</p>
+
+\[score(url) = \gamma \cdot inherited(url) + (1-\gamma) \cdot neighborhood(url)\]
+
+<p>where \(\gamma &lt; 1\), \(inherited\) is obtain from the ancestor of the page and \(neighborhood\) is calculated using anchor-text and anchor context.</p>
+
+<p>The \(inherited\) score is computed as</p>
+
+\[inherited(url) =
+\begin{cases}
+    \delta \cdot sim(q, p) &amp; \mbox{if } sim(q, p) &gt; 0 \\
+    \delta \cdot inherited(p) &amp; \mbox{otherwise}
+\end{cases}\]
+
+<p>where \(\delta &lt; 1\), \(q\) is the query and \(p\) is the page from which the url is extracted.</p>
+
+<p>while the \(neighborhood\) is calculate as</p>
+
+\[neighborhood(url) = \beta \cdot anchor(url) + (1-\beta) \cdot context(url)\]
+
+<p>where \(\beta &lt; 1\), \(anchor(url) = sim(q, anchorText)\) and</p>
+
+\[context(url) =
+\begin{cases}
+    1 &amp; \mbox{if } anchor(url) &gt; 0 \\
+    sim(q, augContext) &amp; \mbox{otherwise}
+\end{cases}\]
+
+<p>The algorithms is defined with as a parametrized function \(SharkSearch(d, \gamma, \delta, \beta)\)</p>
+
+<h3 id="advanced">Advanced</h3>
+
+<p>Other advanced crawler are <strong>focused crawlers, context focused crawler</strong> and <strong>InfoSpiders</strong></p>
+
+<h2 id="page-importance">Page importance</h2>
+
+<ul>
+  <li>Keyword in document: depends on the number and frequency of keywords in the query that the page contains</li>
+  <li>Similarity to a query: generally used when the query is a relatively long text</li>
+  <li>Similarity to seed page: calculated using the similarity function between all seed pages combined and the crawled page</li>
+  <li>Classifier score: either a boolean or continuos relevance score assigned to each page using a trained classifier</li>
+  <li>Retrieval system rank: \(N\) different crawlers (namely using different strategy) are started form the same seeds and allowed to crawl $P\(pages, once the\)N \cdot P$$ have been crawled, they get ranked against the initial query using some retrieval system.</li>
+  <li>Link bases popularity: PageRank, HITS or simpler version such as using the number of in-links to the crawled page</li>
+</ul>
+
+<h3 id="gotchastips">Gotchas/Tips</h3>
+
+<ul>
+  <li>Consistent hashing to partition the urls</li>
+  <li>Keep seen-urls in a disk-based hash table that store them sparsely and use, for example, the first \(k\) bit of the hash to identify the disck block.</li>
+</ul>
+
+<h2 id="references">References</h2>
+
+<ul>
+  <li><a href="https://dollar.biz.uiowa.edu/~gpant/Papers/crawling.pdf">Crawling the Web</a></li>
+  <li><a href="http://infolab.stanford.edu/~olston/publications/crawling_survey.pdf">Web Crawling</a></li>
+</ul>]]></content><author><name></name></author><category term="system-design" /><summary type="html"><![CDATA[What's powering every search engine?]]></summary></entry><entry><title type="html">Limit process memory usage on Linux</title><link href="https://fedemengo.github.io/blog/2019/06/limit-mem-usage/" rel="alternate" type="text/html" title="Limit process memory usage on Linux" /><published>2019-06-25T00:00:00+00:00</published><updated>2019-06-25T00:00:00+00:00</updated><id>https://fedemengo.github.io/blog/2019/06/limit-mem-usage</id><content type="html" xml:base="https://fedemengo.github.io/blog/2019/06/limit-mem-usage/"><![CDATA[<p>Control groups allow to limit the resources usage of a collection of processes.<!--more--></p>
+
+<h2 id="configuration">Configuration</h2>
+
+<p>To use control groups on Manjaro, it’s necessary to install the aur package <code class="language-plaintext highlighter-rouge">libcgroup</code> with <code class="language-plaintext highlighter-rouge">yay -S libcgroup</code></p>
+
+<p>Now let’s create a control groups that limits the memory usage to \(2\) gb of physical memory and \(2\) gb of virtual (swap) memory.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ sudo cgcreate -t USERNAME:USERNAME -a USERNAME:USERNAME -g memory:/CGROUP_NAME
+$ echo $((2 * 1024 * 1024 * 1024)) &gt; /sys/fs/cgroup/memory/CGROUP_NAME/memory.limit_in_bytes
+$ echo $((2 * 1024 * 1024 * 1024)) &gt; /sys/fs/cgroup/memory/CGROUP_NAME/memory.memsw.limit_in_bytes
+</code></pre></div></div>
+
+<p>Running a process using the control groups is as easy as</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ cgexec -g memory:CGROUP_NAME PROCESS
+</code></pre></div></div>
+
+<h2 id="example">Example</h2>
+
+<p>To demonstrate the effectiveness of using <code class="language-plaintext highlighter-rouge">cgroups</code> I run the following program first with and without a control group</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kt">int</span> <span class="o">*</span><span class="n">x</span><span class="p">;</span>
+    <span class="k">while</span><span class="p">(</span><span class="nb">true</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">int</span><span class="p">[</span><span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span><span class="p">]</span>
+    <span class="p">}</span>
+<span class="p">}</span></code></pre></figure>
+
+<p><strong>Without control group</strong></p>
+
+<figure>
+
+  <picture>
+    
+    <source class="responsive-img-srcset" media="(max-width: 480px)" srcset="/assets/img/blog/2019-06-25/crash.svg-480.webp" />
+    <source class="responsive-img-srcset" media="(max-width: 800px)" srcset="/assets/img/blog/2019-06-25/crash.svg-800.webp" />
+    <source class="responsive-img-srcset" media="(max-width: 1400px)" srcset="/assets/img/blog/2019-06-25/crash.svg-1400.webp" />
+    
+
+    <!-- Fallback to the original file -->
+    <img src="/assets/img/blog/2019-06-25/crash.svg" class="img-fluid centered" width="auto" height="auto" onerror="this.onerror=null; $('.responsive-img-srcset').remove();" />
+
+  </picture>
+
+</figure>
+
+<p>Although here the program seems to running just fine, it consumed all the memory on my machine (\(8 GB\)) and I wasn’t able to stop it with a <code class="language-plaintext highlighter-rouge">CTRL^C</code>. I had to wait for the program to crash.</p>
+
+<p><strong>With control group</strong></p>
+
+<figure>
+
+  <picture>
+    
+    <source class="responsive-img-srcset" media="(max-width: 480px)" srcset="/assets/img/blog/2019-06-25/safe.svg-480.webp" />
+    <source class="responsive-img-srcset" media="(max-width: 800px)" srcset="/assets/img/blog/2019-06-25/safe.svg-800.webp" />
+    <source class="responsive-img-srcset" media="(max-width: 1400px)" srcset="/assets/img/blog/2019-06-25/safe.svg-1400.webp" />
+    
+
+    <!-- Fallback to the original file -->
+    <img src="/assets/img/blog/2019-06-25/safe.svg" class="img-fluid centered" width="auto" height="auto" onerror="this.onerror=null; $('.responsive-img-srcset').remove();" />
+
+  </picture>
+
+</figure>
+
+<p>In this case my machine is still responsive and it’s clear how the memory usage is capped. The control group seems to limiting the memory usage somewhere between 4 to 5 gb. The control groups is configured to allow 2 gb of physical memory and up to 10 gb of virtual memory. I guess this is the reason why the actual limit seems so strange.</p>]]></content><author><name></name></author><category term="linux" /><summary type="html"><![CDATA[How to use cgroups]]></summary></entry><entry><title type="html">Scalable Byzantine Consensus via Hardware-assisted Secrete Sharing</title><link href="https://fedemengo.github.io/blog/2019/01/FastBFT/" rel="alternate" type="text/html" title="Scalable Byzantine Consensus via Hardware-assisted Secrete Sharing" /><published>2019-01-22T00:00:00+00:00</published><updated>2019-01-22T00:00:00+00:00</updated><id>https://fedemengo.github.io/blog/2019/01/FastBFT</id><content type="html" xml:base="https://fedemengo.github.io/blog/2019/01/FastBFT/"><![CDATA[<p><a href="https://arxiv.org/pdf/1612.04997v1.pdf">Scalable Byzantine Consensus via Hardware-assisted Secrete Sharing</a></p>
+
+<p>The author of this paper described <strong>FastBFT</strong> a new BFT protocols, highly scalable that achieve better performances than any other BFT protocols. The protocol was designed by studying the weakness of other popular protocols<!--more--> such as <a href="http://pmg.csail.mit.edu/papers/osdi99.pdf">PBFT</a>, <a href="https://www.cs.utexas.edu/~lorenzo/papers/kotla07Zyzzyva.pdf">Zyzzyva</a>, <a href="http://web.cs.ucdavis.edu/~peisert/research/2014-OPODIS-BChain.pdf">BChain</a> and <a href="http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.513.2850&amp;rep=rep1&amp;type=pdf">MiniBFT</a> to improve upon them. There are several components that characterize the paper.</p>
+
+<p>The protocol is an <strong>hybrid</strong> protocol that require hardware assistance (so it only require $2f+1$ nodes in the network) based on a optimistic paradigm (requests are executed before reaching the agreement) that require only $f+1$ active replica to agree and execute a transaction while the other $f$ passive replicas are updates by the network.</p>
+
+<h2 id="message-aggregation">Message aggregation</h2>
+
+<p>To reach the agreement in BFT protocols, $O(n^2)$ messages are required since every replica $S_i$ multicast a commit message (in the general case) to all other active replicas in the network. The $O(n^2)$ message complexity represent the main bottleneck in PBFT.</p>
+
+<p>During the commit phase of the protocol, each replica sends a commit message directly to the primary instead of multicasting the message to the network. To reduce the overhead of message aggregation the authors use <strong>secret sharing</strong> instead of a classical multisignatures approach.</p>
+
+<p>To implement secret sharing, an additional phase of <code class="language-plaintext highlighter-rouge">pre-processing</code> it’s necessary to set up the “secret shares”.</p>
+
+<h3 id="pre-processing">Pre-processing</h3>
+
+<p>In this phase the primary/leader $S_p$ generates a set of random secrets and publish a cryptographic hash of each of them (each secret will be bound to a single requests in the <code class="language-plaintext highlighter-rouge">prepare</code> phase). Then $S_p$ creates $f+1$ shares (and its hash as well) of the message and send one share to each active replica.</p>
+
+<p>In the commit phase, every replica will reveals its share to the primary that will reconstruct the secret (if it receives enough valid shares). The secret is the multicasted by $S_p$ to all the replicas that can verify it (they verify that the hash previously bound to the request is actually correct).</p>
+
+<p>To ensure that $S_p$ doesn’t impersonate any other $S_i$ the generation of secrete, hash, shares and binding happens inside the <strong>TEE</strong> (Trusted Execution Environment) and each secret is bound to a monotonic counter (as well as a single request).</p>
+
+<h2 id="communication-topology">Communication topology</h2>
+
+<p>To further improve the exchange of messages, the network is organized (by the primary) in a balance tree structure rooted at $S_p$. Instead of receiving all $n$ messages from the replicas, the primary take advantage of the tree topology that will allow it to receive a constant number of messages (equal to the branching factor of each node, in the simplest case $n = 2$).</p>
+
+<h3 id="failure-detection">Failure detection</h3>
+
+<p>Crashes are detected by timeout while Byzantine faults are detected by verifying shares: when a node $S_i$ receive a message from one of its children its check whether the aggregate shares is valid. If the shares received are wrong, the node will directly send a <code class="language-plaintext highlighter-rouge">SUSPECT</code> message to its parent (hence aborting the transaction), the message will eventually reach the primary that will be in charge of rearranging the network by putting the suspected faulty node in one of the leaves.</p>]]></content><author><name></name></author><category term="paper-review" /><category term="BFT" /><summary type="html"><![CDATA[Fastest and most scalable BFT protocol]]></summary></entry><entry><title type="html">Linux Commands</title><link href="https://fedemengo.github.io/blog/2018/12/linux-tips/" rel="alternate" type="text/html" title="Linux Commands" /><published>2018-12-11T00:00:00+00:00</published><updated>2018-12-11T00:00:00+00:00</updated><id>https://fedemengo.github.io/blog/2018/12/linux-tips</id><content type="html" xml:base="https://fedemengo.github.io/blog/2018/12/linux-tips/"><![CDATA[<p>The following content was create on Manjaro Linux</p>
+
+<h3 id="systemd">systemd</h3>
+
+<!--more-->
+
+<ul>
+  <li>List all service unit files on the systems with <code class="language-plaintext highlighter-rouge">systemctl list-unit-files -at service</code></li>
+  <li>List all running services with <code class="language-plaintext highlighter-rouge">systemctl list-units -t service --state running</code></li>
+  <li><code class="language-plaintext highlighter-rouge">systemctl cat SERVICE_NAME</code> will cat the service file and give insight on the file structure (dependencies, what happens if service fails)</li>
+  <li>To check whether a service is active just use <code class="language-plaintext highlighter-rouge">systemctl is-active SERVICE_NAME</code></li>
+  <li>It’s also possible to prevent services from running by masking them with <code class="language-plaintext highlighter-rouge">sudo systemctl mask SERVICE_NAME</code> (unmasking is done in the same way)</li>
+</ul>
+
+<h3 id="at">at</h3>
+
+<p>Install at with <code class="language-plaintext highlighter-rouge">pacman -S at</code> and enable the daemon with <code class="language-plaintext highlighter-rouge">sudo systemclt start atd</code> and <code class="language-plaintext highlighter-rouge">sudo systemclt enable atd</code></p>
+
+<p>Create the first job by specifying the time when the job should execute and then typing the actual commands</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ at now +1min
+at&gt; mkdir /home/backup
+at&gt; cp -r ~/ /home/backup/
+</code></pre></div></div>
+<p>Finally type CTRL + D to save</p>
+
+<p>From the <code class="language-plaintext highlighter-rouge">man</code> page, <strong>at</strong> usage is very simple</p>
+<ul>
+  <li>You can inspect at’s queue with <code class="language-plaintext highlighter-rouge">atq</code></li>
+  <li>With <code class="language-plaintext highlighter-rouge">at -c JOB_NUMBER</code> you can inspect the command environment and other useful information</li>
+  <li>To remove a job just use <code class="language-plaintext highlighter-rouge">atrm JOB_NUMBER</code></li>
+  <li>To job can be create from a file with <code class="language-plaintext highlighter-rouge">at -f FILE_NAME</code></li>
+</ul>
+
+<p>It’s also possible to create <code class="language-plaintext highlighter-rouge">batch</code> that are multiple jobs executed the system average drop is below \(0.8\)</p>
+
+<h3 id="cron">cron</h3>
+
+<p>User cron jobs are specific to and can be managed by a user, are stored in <code class="language-plaintext highlighter-rouge">/var/spool/cron/USER/</code>. While system cron job are sore in <code class="language-plaintext highlighter-rouge">/etc/cron.d</code></p>
+
+<p>The form of the file is the same <code class="language-plaintext highlighter-rouge">MINUTE HOUR DAY MONTH DAY_OF_WEEK command_to_run</code>
+The value can be listed <code class="language-plaintext highlighter-rouge">V1,V2,V3</code>, ranges can be used <code class="language-plaintext highlighter-rouge">V1-V5</code>, step value are valid <code class="language-plaintext highlighter-rouge">*/10</code> (ranges and step value can be combine <code class="language-plaintext highlighter-rouge">1-9/2</code>). Minutes are in the range \(1-59\), hours in \(0-23\), days in \(1-31\), month \(1-12\) and day of the week in the range \(0-6\) with \(0\) being sunday.</p>
+
+<p>The command to manage cron jobs is <code class="language-plaintext highlighter-rouge">crontab</code></p>
+
+<p>To create a cronjob that has to be run by root just use <code class="language-plaintext highlighter-rouge">sudo crontab -e</code> to add a new entry, and before specifying the command, indicate the user that should run it <code class="language-plaintext highlighter-rouge">M H D MONTH DW USER command</code>.</p>
+
+<p>To run a command on a hourly/daily/weekly/monthly basis it’s sufficient to place the command in <code class="language-plaintext highlighter-rouge">etc/cron.FREQUENCE/</code></p>
+
+<p>As user administrator it’s possible to specifically allow/deny a user to create <code class="language-plaintext highlighter-rouge">cron</code> and <code class="language-plaintext highlighter-rouge">at</code> jobs by adding the desired username to <code class="language-plaintext highlighter-rouge">etc/cron.deny</code> or <code class="language-plaintext highlighter-rouge">atc/cron.allow</code> (same format for <code class="language-plaintext highlighter-rouge">at</code>)</p>]]></content><author><name></name></author><category term="linux" /><summary type="html"><![CDATA[systemd, at, cron]]></summary></entry><entry><title type="html">K-way merge</title><link href="https://fedemengo.github.io/blog/2018/11/kway-merge/" rel="alternate" type="text/html" title="K-way merge" /><published>2018-11-14T00:00:00+00:00</published><updated>2018-11-14T00:00:00+00:00</updated><id>https://fedemengo.github.io/blog/2018/11/kway-merge</id><content type="html" xml:base="https://fedemengo.github.io/blog/2018/11/kway-merge/"><![CDATA[<p>Given \(K\) sorted arrays (or any sequential container) of size \(N\), merge them into one sorted array.</p>
+
+<h2 id="naive-solution">Naive solution</h2>
+
+<p>A naive solution would require to inspect the first element of all \(K\) array to find the minimum<!--more-->. This process would be repeated for all \(N \cdot K\) values, giving a total complexity of \(O(N\cdot K^2)\)</p>
+
+<h2 id="improved-solution">Improved solution</h2>
+
+<p>Another approach consist of creating the new array with all \(N\cdot K\) value and then sort it, with a running time of \(O((N\cdot K)\log (N\cdot K))\). The problem with this is that we don’t exploit the fact that the arrays are already sorted.</p>
+
+<h2 id="optimal-solution">Optimal solution</h2>
+
+<p>An optimal solution require to quickly find the next element in the sequence among other \(K\) elements. For this reason it’s possible to use a heap of \(K\) elements that “always” stores the first element of each \(K\) arrays. When we remove the minimum value, let’s say from array \(i\), we need to push in the heap the next element from the same array \(i\).</p>
+
+<p>In the following example the algorithm is used to merge \(K\) linked list of size \(N\)</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span class="kt">void</span> <span class="nf">kway_merge</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">single_linked</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;&gt;</span> <span class="o">&amp;</span><span class="n">lists</span><span class="p">,</span> <span class="n">single_linked</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="o">&amp;</span><span class="n">res</span><span class="p">){</span>
+
+    <span class="n">binary_heap</span><span class="o">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="kt">int</span><span class="o">&gt;</span> <span class="n">max_heap</span><span class="p">([](</span><span class="kt">int</span> <span class="n">k1</span><span class="p">,</span> <span class="kt">int</span> <span class="n">k2</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="n">k1</span> <span class="o">&gt;</span> <span class="n">k2</span><span class="p">;});</span>
+
+    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">lists</span><span class="p">.</span><span class="n">size</span><span class="p">();</span> <span class="o">++</span><span class="n">i</span><span class="p">){</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">lists</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">size</span><span class="p">()){</span>
+            <span class="n">max_heap</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">lists</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">front</span><span class="p">(),</span> <span class="n">i</span><span class="p">);</span>
+            <span class="n">lists</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">pop_front</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="c1">// keep a heap with the next lists.size() == K, larger elements</span>
+    <span class="k">while</span><span class="p">(</span><span class="n">max_heap</span><span class="p">.</span><span class="n">size</span><span class="p">()){</span>     <span class="c1">// N * K</span>
+        <span class="k">auto</span> <span class="n">curr_top</span> <span class="o">=</span> <span class="n">max_heap</span><span class="p">.</span><span class="n">top</span><span class="p">();</span>
+        <span class="n">max_heap</span><span class="p">.</span><span class="n">pop</span><span class="p">();</span>                     <span class="c1">// LOG K</span>
+
+        <span class="kt">int</span> <span class="n">val</span> <span class="o">=</span> <span class="n">curr_top</span><span class="p">.</span><span class="n">first</span><span class="p">;</span>
+        <span class="kt">int</span> <span class="n">list_idx</span> <span class="o">=</span> <span class="n">curr_top</span><span class="p">.</span><span class="n">second</span><span class="p">;</span>
+
+        <span class="n">res</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">val</span><span class="p">);</span>
+
+        <span class="k">if</span><span class="p">(</span><span class="n">lists</span><span class="p">[</span><span class="n">list_idx</span><span class="p">].</span><span class="n">size</span><span class="p">())</span> <span class="p">{</span>    <span class="c1">// I should add a new element from the next list</span>
+            <span class="n">max_heap</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">lists</span><span class="p">[</span><span class="n">list_idx</span><span class="p">].</span><span class="n">front</span><span class="p">(),</span> <span class="n">list_idx</span><span class="p">);</span>   <span class="c1">// LOG K</span>
+            <span class="n">lists</span><span class="p">[</span><span class="n">list_idx</span><span class="p">].</span><span class="n">pop_front</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="c1">// Total complexity O(N * K log K)</span>
+
+<span class="p">}</span></code></pre></figure>
+
+<p>This particular implementation of the heap allows to store a <code class="language-plaintext highlighter-rouge">key-value</code> element instead of the classic heap where the value is also the key. The <code class="language-plaintext highlighter-rouge">key</code> represent the actual value of the element and the <code class="language-plaintext highlighter-rouge">value</code> represent the index of the array the item is from.</p>
+
+<p>It’s necessary to fill the heap with the first elements of each array, this operations takes \(\sum\limits_i^K \log i = O(K \log K)\) and then, the while loop it’s going to perform \(N \cdot K\) iteration during which the minimum/maximum value is removed from the heap and new value is pushed, so the time complexity would be \(O(N\cdot K \log K)\).</p>
+
+<p>Overall the total running time is going to be \(O(K \log K) + O(N\cdot K \log K) = O(N\cdot K \log K)\), the main improvement is achieved by keeping only \(K\) values in the heap.</p>
+
+<h2 id="optimal-solution-variant">Optimal solution (variant)</h2>
+
+<p>Another similar solution consists in merging two lists at the time until we end up with just one list, the result. In this case, with the same assumption as before, we are performing \(\dfrac{K}{2}, \dfrac{K}{4}, \dots, 2 = \log_{2}K\) merges of \(N, 2 \cdot N, \dots, 2^{\log_{2}K} \cdot N = K \cdot N\) elements. This solution has the same running time of \(O(N\cdot K \log K)\)</p>
+
+<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="nc">Node</span> <span class="nf">kwayMerge</span><span class="o">(</span><span class="nc">Node</span><span class="o">[]</span> <span class="n">lists</span><span class="o">){</span>
+    <span class="nc">Queue</span><span class="o">&lt;</span><span class="nc">Node</span><span class="o">&gt;</span> <span class="n">q</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">LinkedList</span><span class="o">&lt;&gt;();</span>
+
+    <span class="k">for</span><span class="o">(</span><span class="nc">Node</span> <span class="nl">n:</span> <span class="n">lists</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">q</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">n</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="k">while</span><span class="o">(</span><span class="n">q</span><span class="o">.</span><span class="na">size</span><span class="o">()</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span> <span class="n">i</span><span class="o">&lt;</span><span class="n">q</span><span class="o">.</span><span class="na">size</span><span class="o">();</span> <span class="n">i</span><span class="o">+=</span><span class="mi">2</span><span class="o">)</span> <span class="o">{</span>
+            <span class="nc">Node</span> <span class="n">x</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="na">poll</span><span class="o">();</span>
+            <span class="nc">Node</span> <span class="n">y</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="na">poll</span><span class="o">();</span>
+            <span class="nc">Node</span> <span class="n">z</span> <span class="o">=</span> <span class="n">merge</span><span class="o">(</span><span class="n">x</span><span class="o">,</span> <span class="n">y</span><span class="o">);</span>
+            <span class="n">q</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">z</span><span class="o">);</span>
+        <span class="o">}</span>
+    <span class="o">}</span>
+
+    <span class="k">return</span> <span class="n">q</span><span class="o">.</span><span class="na">poll</span><span class="o">();</span>
+<span class="o">}</span></code></pre></figure>
+
+<details>
+<summary><a>Expand</a> merge routine</summary>
+
+
+<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="kd">class</span> <span class="nc">Node</span> <span class="o">{</span>
+    <span class="kt">int</span> <span class="n">val</span><span class="o">;</span>
+    <span class="nc">Node</span> <span class="n">next</span><span class="o">;</span>
+
+    <span class="nc">Node</span><span class="o">(</span><span class="n">v</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="n">v</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+
+<span class="nc">Node</span> <span class="nf">merge</span><span class="o">(</span><span class="nc">Node</span> <span class="n">l1</span><span class="o">,</span> <span class="nc">Node</span> <span class="n">l2</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">if</span><span class="o">(</span><span class="n">l1</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span>
+            <span class="k">return</span> <span class="n">l2</span><span class="o">;</span>
+    <span class="k">if</span><span class="o">(</span><span class="n">l2</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span>
+        <span class="k">return</span> <span class="n">l1</span><span class="o">;</span>
+
+    <span class="nc">ListNode</span> <span class="n">root</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">ListNode</span><span class="o">(-</span><span class="mi">1</span><span class="o">);</span>
+    <span class="nc">ListNode</span> <span class="n">next</span> <span class="o">=</span> <span class="n">root</span><span class="o">;</span>
+
+    <span class="k">while</span><span class="o">(</span><span class="n">l1</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">||</span> <span class="n">l2</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">if</span><span class="o">(</span><span class="n">l1</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">l2</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">next</span><span class="o">.</span><span class="na">next</span> <span class="o">=</span> <span class="n">l1</span><span class="o">.</span><span class="na">val</span> <span class="o">&lt;</span> <span class="n">l2</span><span class="o">.</span><span class="na">val</span> <span class="o">?</span> <span class="n">l1</span> <span class="o">:</span> <span class="n">l2</span><span class="o">;</span>
+        <span class="o">}</span> <span class="k">else</span> <span class="k">if</span><span class="o">(</span><span class="n">l1</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">next</span><span class="o">.</span><span class="na">next</span> <span class="o">=</span> <span class="n">l1</span><span class="o">;</span>
+        <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+            <span class="n">next</span><span class="o">.</span><span class="na">next</span> <span class="o">=</span> <span class="n">l2</span><span class="o">;</span>
+        <span class="o">}</span>
+
+        <span class="k">if</span><span class="o">(</span><span class="n">next</span><span class="o">.</span><span class="na">next</span> <span class="o">==</span> <span class="n">l1</span><span class="o">)</span> <span class="o">{</span>
+            <span class="n">l1</span> <span class="o">=</span> <span class="n">l1</span><span class="o">.</span><span class="na">next</span><span class="o">;</span>
+        <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+            <span class="n">l2</span> <span class="o">=</span> <span class="n">l2</span><span class="o">.</span><span class="na">next</span><span class="o">;</span>
+        <span class="o">}</span>
+
+        <span class="n">next</span> <span class="o">=</span> <span class="n">next</span><span class="o">.</span><span class="na">next</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="na">next</span><span class="o">;</span>
+<span class="o">}</span></code></pre></figure>
+
+</details>]]></content><author><name></name></author><category term="puzzle" /><category term="cpp" /><category term="java" /><summary type="html"><![CDATA[Merge K sorted container]]></summary></entry><entry><title type="html">Maximum non adjacent subsequence</title><link href="https://fedemengo.github.io/blog/2018/11/max-nonadj-subsequence/" rel="alternate" type="text/html" title="Maximum non adjacent subsequence" /><published>2018-11-14T00:00:00+00:00</published><updated>2018-11-14T00:00:00+00:00</updated><id>https://fedemengo.github.io/blog/2018/11/max-nonadj-subsequence</id><content type="html" xml:base="https://fedemengo.github.io/blog/2018/11/max-nonadj-subsequence/"><![CDATA[<p>Given an arrays of \(A\) size \(N\), find a sequence of non adjacent value with the larger sum, the sequence should be something like \(A_i, A_{i+k}, A_{i+k'}, \cdots, A_{i+k^n}, \forall k &gt; 1\)</p>
+
+<p>It’s easy to solve this problem with dynamic programming<!--more--></p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span class="kt">int</span> <span class="nf">dp</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="o">&amp;</span><span class="n">v</span><span class="p">,</span> <span class="kt">int</span> <span class="n">index</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">index</span> <span class="o">&gt;=</span> <span class="n">v</span><span class="p">.</span><span class="n">size</span><span class="p">())</span>
+        <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+
+    <span class="k">if</span><span class="p">(</span><span class="n">memo</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">memo</span><span class="p">[</span><span class="n">index</span><span class="p">];</span>
+
+    <span class="c1">// including the current value "v[index]" require to skip the next at "index + 1"</span>
+    <span class="kt">int</span> <span class="n">incl</span> <span class="o">=</span> <span class="n">v</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">+</span> <span class="n">dp</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">index</span> <span class="o">+</span> <span class="mi">2</span><span class="p">);</span>
+    <span class="c1">// excluding the current value allows us to consider the next value at "index + 1"</span>
+    <span class="kt">int</span> <span class="n">excl</span> <span class="o">=</span> <span class="n">dp</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">);</span>
+
+    <span class="n">memo</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">max</span><span class="p">(</span><span class="n">incl</span><span class="p">,</span> <span class="n">excl</span><span class="p">);</span>
+
+    <span class="k">return</span> <span class="n">memo</span><span class="p">[</span><span class="n">index</span><span class="p">];</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>Using a similar intuition it’s possible to come up with a linear solution</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span class="kt">int</span> <span class="nf">linear</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="o">&amp;</span><span class="n">v</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kt">int</span> <span class="n">incl</span> <span class="o">=</span> <span class="n">v</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">excl</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">tmp</span><span class="p">;</span>
+
+    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">1</span><span class="p">;</span> <span class="n">i</span><span class="o">&lt;</span><span class="n">N</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">){</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">incl</span><span class="p">;</span>
+        <span class="n">incl</span> <span class="o">=</span> <span class="n">max</span><span class="p">(</span><span class="n">incl</span><span class="p">,</span> <span class="n">excl</span> <span class="o">+</span> <span class="n">v</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
+        <span class="n">excl</span> <span class="o">=</span> <span class="n">tmp</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">std</span><span class="o">::</span><span class="n">max</span><span class="p">(</span><span class="n">incl</span><span class="p">,</span> <span class="n">excl</span><span class="p">);</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>By analyzing all possible cases we see that</p>
+<ul>
+  <li>if <code class="language-plaintext highlighter-rouge">incl &gt; excl + v[i]</code> we don’t care for the current value, hence we can decide both to consider the next element or to skip it. So <code class="language-plaintext highlighter-rouge">incl</code> is going to be equal to <code class="language-plaintext highlighter-rouge">excl</code></li>
+  <li>if <code class="language-plaintext highlighter-rouge">incl &lt; excl + v[i]</code> then <code class="language-plaintext highlighter-rouge">incl</code> has the current value, while <code class="language-plaintext highlighter-rouge">excl</code> is set to the previous value of <code class="language-plaintext highlighter-rouge">incl</code></li>
+</ul>
+
+<p>Basically at every iteration <code class="language-plaintext highlighter-rouge">incl</code> and <code class="language-plaintext highlighter-rouge">excl</code> are swapped (except for the case when using a value doesn’t led to a better solution)</p>]]></content><author><name></name></author><category term="puzzle" /><category term="cpp" /><summary type="html"><![CDATA[Find the non adjacent subsequence with maximum sum]]></summary></entry><entry><title type="html">Two Sum</title><link href="https://fedemengo.github.io/blog/2018/11/two-sum/" rel="alternate" type="text/html" title="Two Sum" /><published>2018-11-14T00:00:00+00:00</published><updated>2018-11-14T00:00:00+00:00</updated><id>https://fedemengo.github.io/blog/2018/11/two-sum</id><content type="html" xml:base="https://fedemengo.github.io/blog/2018/11/two-sum/"><![CDATA[<p>The two sum problem require us to find two elements in an arrays that sum to a given value. There are different approach to solve the problem depending on whether the arrays is sort or not<!--more-->.</p>
+
+<p>A naive solution looks something like this</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span class="kt">bool</span> <span class="nf">two_sum_brute_force</span><span class="p">(</span><span class="k">const</span> <span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="o">&amp;</span><span class="n">v</span><span class="p">,</span> <span class="kt">int</span> <span class="n">sum</span><span class="p">){</span>
+    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">i</span><span class="o">&lt;</span><span class="n">v</span><span class="p">.</span><span class="n">size</span><span class="p">();</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span>
+        <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">j</span><span class="o">=</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">;</span> <span class="n">j</span><span class="o">&lt;</span><span class="n">v</span><span class="p">.</span><span class="n">size</span><span class="p">();</span> <span class="o">++</span><span class="n">j</span><span class="p">)</span>
+            <span class="k">if</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">v</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">==</span> <span class="n">sum</span><span class="p">)</span>
+                <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>This solution checks all combinations between two number and compare the result to the sum value, the time complexity is \(O(N^2)\).</p>
+
+<h3 id="sorted-array">Sorted array</h3>
+
+<p>If we are given a sorted array we can experiment and solve the problem with a binary search. For each element \(x\) in the array we need to check if an element \(sum - x\) exists.</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span class="kt">bool</span> <span class="nf">two_sum_binary_search</span><span class="p">(</span><span class="k">const</span> <span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="o">&amp;</span><span class="n">v</span><span class="p">,</span> <span class="kt">int</span> <span class="n">sum</span><span class="p">){</span>		<span class="c1">// IF SORTED</span>
+    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">i</span><span class="o">&lt;</span><span class="n">v</span><span class="p">.</span><span class="n">size</span><span class="p">();</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">binary_search</span><span class="p">(</span><span class="n">v</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">v</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span> <span class="n">sum</span> <span class="o">-</span> <span class="n">v</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+            <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>With this we are performing a binary search for every elements, the total running time would be \(O(N\log N)\).</p>
+
+<p>If the arrays is sorted we can also solve code a linear solution for the problem. This new approach use a sub-interval of the array and compare the sum of its leftmost and rightmost element (the limits of the interval) to the target sum. This require the arrays to be sorted because</p>
+<ul>
+  <li>If the sum is greater that the target, we can obtain a smaller sum by shrinking the interval on the right (excluding larger value)</li>
+  <li>If the sum is smaller the interval is shrunk on the left (to leave out smaller elements)</li>
+</ul>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span class="kt">bool</span> <span class="nf">linear</span><span class="p">(</span><span class="k">const</span> <span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="o">&amp;</span><span class="n">v</span><span class="p">,</span> <span class="kt">int</span> <span class="n">sum</span><span class="p">){</span>				<span class="c1">// IF SORTED</span>
+    <span class="kt">int</span> <span class="n">low</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">high</span> <span class="o">=</span> <span class="n">v</span><span class="p">.</span><span class="n">size</span><span class="p">()</span><span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+    <span class="k">while</span><span class="p">(</span><span class="n">low</span> <span class="o">&lt;</span> <span class="n">high</span><span class="p">){</span>
+        <span class="kt">int</span> <span class="n">s</span> <span class="o">=</span> <span class="n">v</span><span class="p">[</span><span class="n">low</span><span class="p">]</span> <span class="o">+</span> <span class="n">v</span><span class="p">[</span><span class="n">high</span><span class="p">];</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">s</span> <span class="o">&lt;</span> <span class="n">sum</span><span class="p">)</span> <span class="o">++</span><span class="n">low</span><span class="p">;</span>
+        <span class="k">else</span> <span class="k">if</span><span class="p">(</span><span class="n">s</span> <span class="o">&gt;</span> <span class="n">sum</span><span class="p">)</span> <span class="o">--</span><span class="n">high</span><span class="p">;</span>
+        <span class="k">else</span> <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>The running time for this solution is obviously \(O(N)\)</p>
+
+<h2 id="general-case">General case</h2>
+
+<p>If the array is not sorted, a general approach to solve the problem could be using an hash set. While iterating over all elements for each element \(x\) I check if an element with value \(sum-x\) exists, if it doesn’t exists I just put the element in the set.</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span class="kt">bool</span> <span class="nf">hashing</span><span class="p">(</span><span class="k">const</span> <span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="o">&amp;</span><span class="n">v</span><span class="p">,</span> <span class="kt">int</span> <span class="n">sum</span><span class="p">){</span>
+    <span class="n">unordered_set</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">S</span><span class="p">;</span>
+    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="o">:</span> <span class="n">v</span><span class="p">)</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">S</span><span class="p">.</span><span class="n">count</span><span class="p">(</span><span class="n">sum</span><span class="o">-</span><span class="n">x</span><span class="p">))</span> <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+        <span class="k">else</span> <span class="n">S</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="n">x</span><span class="p">);</span>
+    <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>The running time is still “linear”, although some overhead is caused by the hash set/table, both for the time and memory usage.</p>
+
+<h2 id="count-pairs">Count pairs</h2>
+
+<p>The solutions above only return if two elements that sum up to a certain value exists. The following snippet counts how many of those pair exists</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span class="n">std</span><span class="o">::</span><span class="n">pair</span><span class="o">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="kt">bool</span><span class="o">&gt;</span> <span class="n">count</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="o">&amp;</span><span class="n">v</span><span class="p">,</span> <span class="kt">int</span> <span class="n">index</span><span class="p">,</span> <span class="kt">int</span> <span class="n">m</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;::</span><span class="n">iterator</span> <span class="n">low</span><span class="p">,</span> <span class="n">up</span><span class="p">;</span>
+
+    <span class="kt">int</span> <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="kt">bool</span> <span class="n">same</span> <span class="o">=</span> <span class="nb">false</span><span class="p">;</span>
+
+    <span class="n">low</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">lower_bound</span><span class="p">(</span><span class="n">v</span><span class="p">.</span><span class="n">begin</span><span class="p">()</span> <span class="o">+</span> <span class="n">index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">v</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span> <span class="n">m</span> <span class="o">-</span> <span class="n">v</span><span class="p">[</span><span class="n">index</span><span class="p">]);</span>
+    <span class="n">up</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">upper_bound</span><span class="p">(</span><span class="n">v</span><span class="p">.</span><span class="n">begin</span><span class="p">()</span> <span class="o">+</span> <span class="n">index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">v</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span> <span class="n">m</span> <span class="o">-</span> <span class="n">v</span><span class="p">[</span><span class="n">index</span><span class="p">]);</span>
+
+    <span class="k">if</span><span class="p">(</span><span class="n">low</span> <span class="o">!=</span> <span class="n">v</span><span class="p">.</span><span class="n">end</span><span class="p">())</span> <span class="p">{</span>
+        <span class="n">count</span> <span class="o">=</span> <span class="n">up</span> <span class="o">-</span> <span class="n">low</span><span class="p">;</span>
+        <span class="c1">// if for the current element v[index] is true that 'v[index] * 2 = m' it's necessary to account for that</span>
+        <span class="c1">// as we skip the following equal element by removing 1 from all possible values</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">==</span> <span class="n">m</span> <span class="o">-</span> <span class="n">v</span><span class="p">[</span><span class="n">index</span><span class="p">])</span> <span class="p">{</span>
+            <span class="n">same</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="p">{</span><span class="n">count</span><span class="p">,</span> <span class="n">same</span><span class="p">};</span>
+<span class="p">}</span>
+
+<span class="kt">long</span> <span class="nf">countPair</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="o">&amp;</span><span class="n">v</span><span class="p">,</span> <span class="kt">int</span> <span class="n">m</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// n log n</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">sort</span><span class="p">(</span><span class="n">v</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">v</span><span class="p">.</span><span class="n">end</span><span class="p">());</span>
+
+    <span class="kt">int</span> <span class="n">lastE</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+    <span class="kt">long</span> <span class="n">total</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">pair</span><span class="o">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="kt">bool</span><span class="o">&gt;</span> <span class="n">r</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">,</span> <span class="nb">false</span><span class="p">};</span>
+    <span class="c1">// n * (log n)</span>
+    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">i</span><span class="o">&lt;</span><span class="n">v</span><span class="p">.</span><span class="n">size</span><span class="p">();</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kt">int</span> <span class="n">x</span> <span class="o">=</span> <span class="n">v</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">x</span> <span class="o">==</span> <span class="n">lastE</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">if</span><span class="p">(</span><span class="n">r</span><span class="p">.</span><span class="n">second</span><span class="p">)</span> <span class="p">{</span>
+                <span class="n">r</span><span class="p">.</span><span class="n">first</span><span class="o">--</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="n">total</span> <span class="o">+=</span> <span class="n">r</span><span class="p">.</span><span class="n">first</span><span class="p">;</span>
+            <span class="k">continue</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="n">lastE</span> <span class="o">=</span> <span class="n">x</span><span class="p">;</span>
+        <span class="c1">// log n</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">count</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">m</span><span class="p">);</span>
+        <span class="n">total</span> <span class="o">+=</span> <span class="n">r</span><span class="p">.</span><span class="n">first</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">total</span><span class="p">;</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>The idea is pretty straightforward: for every element, perform a binary search of the complementary element that sums up to the target value. Although the algorithm itself has a running time of \(O(N\cdot \log N)\) because of sorting, it’s possible to make it run a little bit faster by avoid recalculating the result for repeating elements. The only thing to be careful about is the case when \(element + element = target\), in that case, as the following repeating element are considered, is necessary to decrease the partial solution by one, to account for the element that is before the current.</p>]]></content><author><name></name></author><category term="puzzle" /><category term="cpp" /><summary type="html"><![CDATA[Find two elements that sum to a given value]]></summary></entry></feed>
