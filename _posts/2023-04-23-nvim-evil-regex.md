@@ -175,11 +175,11 @@ curr: 'TAK 2000', Time: 0.000s. next: 'S Y S T E M S   I M P R O V E D '
 curr: 'S Y S T E M S   I M P R O V E D ', Time: 0.000s. next: 'Run Date: '
 ```
 
-The regex `[0-9:%.]* *execve%(` equivalent to `[0-9:.]* *execve(` without regex escape chars took $$\approx 4.4$$ seconds to evaluate, which is crazy considering all the other regexes evaluated instantly. I'm no expert in regexes but I think the issues is with a backtracking explosion. Remember the [naive string matching](https://en.wikipedia.org/wiki/String-searching_algorithm#Naive_string_search)?
+The regex `[0-9:%.]* *execve%(` equivalent to `[0-9:.]* *execve(` without regex escape chars took $$\approx 4.4$$ seconds to evaluate, which is crazy considering all the other regexes evaluated instantly. I'm no expert in regexes but I think the issues is with a backtracking explosion. Remember the [naive string searching](https://en.wikipedia.org/wiki/String-searching_algorithm#Naive_string_search)?
 
 Anyway, the trend was close to quadratic, on paper the regex had to perform $$\sum_{i=1}^N i = \frac{N(N+1)}{2} = O(N^2)$$ matches.
 
-{% include figure.html path="assets/img/blog/2023-04-23/nvim-plot.png" class="img-fluid rounded z-depth-1" zoomable=true %}
+{% include figure.html path="assets/img/blog/2023-04-23/nvim-plot.png" class="img-fluid rounded" %}
 
 I spent some time trying to understand why it was written that way, after all `[0-9:.]* *execve(` is equivalent to `execve(` given that both `[0-9:.]` and `\s` are matched zero or more times, so they don't really matter. This would not have been the case if the regex had been anchored.
 
