@@ -4,6 +4,7 @@ title: Visualizing cellular automata
 date: 2022-10-28
 description:
 tags: computation automata
+hidden: true
 ---
 
 <script>

@@ -4,6 +4,7 @@ title: Poincaré recurrence time in cellular automata
 date: 2022-10-27
 description: Exploring the asimptotical behavior of CA
 tags: computation automata
+hidden: true
 ---
 
 

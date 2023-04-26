@@ -4,6 +4,7 @@ title:  "TomTom Spark on Linux"
 description: "Load audio files using the command line"
 tag:
   - unix
+hidden: true
 ---
 
 I use a TomTom Spark 3 to track my sport activities and I love it. The only problem with that is that it's a pretty old watch, TomTom discontinued the sport series so there is not so much support for it anymore.
