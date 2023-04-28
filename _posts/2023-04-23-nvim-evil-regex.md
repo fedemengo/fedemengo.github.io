@@ -237,3 +237,7 @@ It made me appreciate open source and hate regex even more! After this was done 
 
 Another interesting way to investigate slow downs in nvim that I found is [this](https://github.com/stevearc/profile.nvim) amazing profiling plugin. In case `--startuptime` doesn't give enough or any actionable information.
 
+This is what it showed for problem. Extremly clear and helpful
+
+{% include figure.html path="assets/img/blog/2023-04-23/profiler.png" class="img-fluid rounded" zoomable=true %}
+
