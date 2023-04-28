@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.2">Jekyll</generator><link href="https://fedemengo.github.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://fedemengo.github.io/" rel="alternate" type="text/html" hreflang="en" /><updated>2023-04-26T21:55:11+00:00</updated><id>https://fedemengo.github.io/feed.xml</id><title type="html">fedemengo</title><entry><title type="html">How I made nvim 300x faster</title><link href="https://fedemengo.github.io/blog/2023/04/nvim-evil-regex/" rel="alternate" type="text/html" title="How I made nvim 300x faster" /><published>2023-04-23T00:00:00+00:00</published><updated>2023-04-23T00:00:00+00:00</updated><id>https://fedemengo.github.io/blog/2023/04/nvim-evil-regex</id><content type="html" xml:base="https://fedemengo.github.io/blog/2023/04/nvim-evil-regex/"><![CDATA[<h2 id="intro">Intro</h2>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.2">Jekyll</generator><link href="https://fedemengo.github.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://fedemengo.github.io/" rel="alternate" type="text/html" hreflang="en" /><updated>2023-04-28T20:27:27+00:00</updated><id>https://fedemengo.github.io/feed.xml</id><title type="html">fedemengo</title><entry><title type="html">How I made nvim 300x faster</title><link href="https://fedemengo.github.io/blog/2023/04/nvim-evil-regex/" rel="alternate" type="text/html" title="How I made nvim 300x faster" /><published>2023-04-23T00:00:00+00:00</published><updated>2023-04-23T00:00:00+00:00</updated><id>https://fedemengo.github.io/blog/2023/04/nvim-evil-regex</id><content type="html" xml:base="https://fedemengo.github.io/blog/2023/04/nvim-evil-regex/"><![CDATA[<h2 id="intro">Intro</h2>
 
 <p>For a while, I’ve been working on a side <a href="https://github.com/fedemengo/d2bist">project</a> that generates files with many 0s and 1s. As nvim is my primary editor, I frequently need to check or modify the contents of these files. However, to my great annoyance, whenever the files contained more than, let’s say, tens of thousands of bit characters, nvim would hang for several seconds, minutes, or until I would SIGKILL it.</p>
 
@@ -234,7 +234,25 @@ sys     0m0.000s
 
 <p>It made me appreciate open source and hate regex even more! After this was done I started to wonder if a tool to <a href="https://en.wikipedia.org/wiki/NFA_minimization">simplify</a> regexes exists and how <a href="https://cstheory.blogoverflow.com/2011/08/on-learning-regular-languages/">difficult</a> it would be to make one. Maybe I’ll give it a shot.</p>
 
-<p>Another interesting way to investigate slow downs in nvim that I found is <a href="https://github.com/stevearc/profile.nvim">this</a> amazing profiling plugin. In case <code class="language-plaintext highlighter-rouge">--startuptime</code> doesn’t give enough or any actionable information.</p>]]></content><author><name></name></author><category term="debugging" /><category term="vim" /><category term="nvim" /><category term="regex" /><summary type="html"><![CDATA[Tracking down an evil regex in vim and neovim]]></summary></entry><entry><title type="html">Visualizing cellular automata</title><link href="https://fedemengo.github.io/blog/2022/10/visualizing-cellular-automata/" rel="alternate" type="text/html" title="Visualizing cellular automata" /><published>2022-10-28T00:00:00+00:00</published><updated>2022-10-28T00:00:00+00:00</updated><id>https://fedemengo.github.io/blog/2022/10/visualizing-cellular-automata</id><content type="html" xml:base="https://fedemengo.github.io/blog/2022/10/visualizing-cellular-automata/"><![CDATA[<script>
+<p>Another interesting way to investigate slow downs in nvim that I found is <a href="https://github.com/stevearc/profile.nvim">this</a> amazing profiling plugin. In case <code class="language-plaintext highlighter-rouge">--startuptime</code> doesn’t give enough or any actionable information.</p>
+
+<p>This is what it showed for problem. Extremly clear and helpful</p>
+
+<figure>
+
+  <picture>
+    
+    <source class="responsive-img-srcset" media="(max-width: 480px)" srcset="/assets/img/blog/2023-04-23/profiler-480.webp" />
+    <source class="responsive-img-srcset" media="(max-width: 800px)" srcset="/assets/img/blog/2023-04-23/profiler-800.webp" />
+    <source class="responsive-img-srcset" media="(max-width: 1400px)" srcset="/assets/img/blog/2023-04-23/profiler-1400.webp" />
+    
+
+    <!-- Fallback to the original file -->
+    <img src="/assets/img/blog/2023-04-23/profiler.png" class="img-fluid rounded" width="auto" height="auto" data-zoomable="" onerror="this.onerror=null; $('.responsive-img-srcset').remove();" />
+
+  </picture>
+
+</figure>]]></content><author><name></name></author><category term="debugging" /><category term="vim" /><category term="nvim" /><category term="regex" /><summary type="html"><![CDATA[Tracking down an evil regex in vim and neovim]]></summary></entry><entry><title type="html">Visualizing cellular automata</title><link href="https://fedemengo.github.io/blog/2022/10/visualizing-cellular-automata/" rel="alternate" type="text/html" title="Visualizing cellular automata" /><published>2022-10-28T00:00:00+00:00</published><updated>2022-10-28T00:00:00+00:00</updated><id>https://fedemengo.github.io/blog/2022/10/visualizing-cellular-automata</id><content type="html" xml:base="https://fedemengo.github.io/blog/2022/10/visualizing-cellular-automata/"><![CDATA[<script>
 
 let renderModels = (models, darkTheme) => {
     for(let model of models) {
