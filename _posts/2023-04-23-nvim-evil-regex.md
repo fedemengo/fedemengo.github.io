@@ -237,7 +237,7 @@ It made me appreciate open source and hate regex even more! After this was done 
 
 Another interesting way to investigate slow downs in nvim that I found is [this](https://github.com/stevearc/profile.nvim) amazing profiling plugin. In case `--startuptime` doesn't give enough or any actionable information.
 
-This is what it showed for problem. Extremly clear and helpful
+For example, this is what it showed for my problem. I added a small [wrapper](https://github.com/fedemengo/nvim/blob/5edbcf57707a5a987275dad8f1e78f3b13efddc4/fnl/mods/dev/profile.fnl) to my config and followed the intruction on the repo on how to generate a profile of the startup. And finally inspected the profile with [perfetto](https://github.com/google/perfetto).
 
 {% include figure.html path="assets/img/blog/2023-04-23/profiler.png" class="img-fluid rounded" zoomable=true %}
 
