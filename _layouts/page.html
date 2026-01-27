@@ -1,6 +1,12 @@
 ---
 layout: default
 ---
+{% if page._styles %}
+  <!-- Page/Post style -->
+  <style type="text/css">
+    {{ page._styles }}
+  </style>
+{% endif %}
 <!-- page.html -->
         <div class="post">
 
