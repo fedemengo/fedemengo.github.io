@@ -66,5 +66,5 @@ _styles: |
   </div>
   </div>
 {% else %}
-  <div>No links found. Add items to <code>_data/links.yml</code>.</div>
+  <div>...</div>
 {% endif %}
