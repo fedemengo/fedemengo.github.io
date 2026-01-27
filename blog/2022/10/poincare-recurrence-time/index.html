@@ -23,7 +23,7 @@
     <!-- Fonts & Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/academicons@1.9.1/css/academicons.min.css" integrity="sha256-i1+4qU2G2860dGGIOJscdC30s9beBXjFfzjWLjBRsBg=" crossorigin="anonymous">
-    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700%7CRoboto+Slab:100,300,400,500,700%7CMaterial+Icons">
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Roboto+Slab:100,300,400,500,700|Material+Icons">
 
     <!-- Code Syntax Highlighting -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jwarby/jekyll-pygments-themes@master/github.css" media="" id="highlight_theme_light">
@@ -188,7 +188,7 @@
 
 <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">plot_recurrence_match</span><span class="p">(</span><span class="n">recurrence_indices</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">recurrence_indices</span> <span class="o">&lt;=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span>
-        <span class="nf">print</span><span class="p">(</span><span class="s">"recurrence was not found"</span><span class="p">)</span>
+        <span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="s">recurrence was not found</span><span class="sh">"</span><span class="p">)</span>
         <span class="k">return</span>
 
     <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">concatenate</span><span class="p">(</span>
@@ -225,29 +225,29 @@
 
 <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">time</span>
 
-<span class="n">colorize</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">vectorize</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="s">'red'</span> <span class="k">if</span> <span class="n">x</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span> <span class="k">else</span> <span class="s">'green'</span><span class="p">)</span>
+<span class="n">colorize</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">vectorize</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="sh">'</span><span class="s">red</span><span class="sh">'</span> <span class="k">if</span> <span class="n">x</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span> <span class="k">else</span> <span class="sh">'</span><span class="s">green</span><span class="sh">'</span><span class="p">)</span>
 <span class="n">execution_time</span> <span class="o">=</span> <span class="p">[]</span>
 <span class="k">try</span><span class="p">:</span>
     <span class="n">step_limit</span> <span class="o">=</span> <span class="mi">20000</span>
     <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">256</span><span class="p">):</span>
         <span class="n">plt</span><span class="p">.</span><span class="nf">clf</span><span class="p">()</span>
-        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="s">'rule </span><span class="si">{</span><span class="n">r</span><span class="si">}</span><span class="s">'</span><span class="p">)</span>
+        <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">'</span><span class="s">rule </span><span class="si">{</span><span class="n">r</span><span class="si">}</span><span class="sh">'</span><span class="p">)</span>
         <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="p">.</span><span class="nf">time</span><span class="p">()</span>
         <span class="n">xs</span><span class="p">,</span> <span class="n">ub</span><span class="p">,</span> <span class="n">steps</span> <span class="o">=</span> <span class="nf">plot_recurrence_upperbound</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="n">step_limit</span><span class="o">=</span><span class="n">step_limit</span><span class="p">)</span>
         <span class="n">end</span> <span class="o">=</span>  <span class="n">time</span><span class="p">.</span><span class="nf">time</span><span class="p">()</span>
         <span class="n">execution_time</span><span class="p">.</span><span class="nf">append</span><span class="p">((</span><span class="n">end</span><span class="o">-</span><span class="n">start</span><span class="p">,</span> <span class="n">r</span><span class="p">))</span>
-        <span class="nf">print</span><span class="p">(</span><span class="s">"</span><span class="se">\t</span><span class="s">"</span><span class="p">,</span> <span class="n">end</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span>
+        <span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="se">\t</span><span class="sh">"</span><span class="p">,</span> <span class="n">end</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span>
         <span class="c1">#plt.rcParams["figure.figsize"]=10,10
 </span>        <span class="c1">#plt.plot(xs, ub)
 </span>        <span class="c1">#plt.scatter(xs, steps, marker='.', c=colorize(steps))
 </span>        <span class="c1">#plt.show()
 </span>        <span class="c1">#plt.savefig(f"rule-{r}_{step_limit}steps.png")
 </span><span class="k">except</span> <span class="nb">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-    <span class="nf">print</span><span class="p">(</span><span class="s">"aborted"</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+    <span class="nf">print</span><span class="p">(</span><span class="sh">"</span><span class="s">aborted</span><span class="sh">"</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
 
 <span class="n">execution_time</span><span class="p">.</span><span class="nf">sort</span><span class="p">(</span><span class="n">reverse</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">execution_time</span><span class="p">[:</span><span class="mi">20</span><span class="p">]:</span>
-    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="s">"rule</span><span class="si">{</span><span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s"> took </span><span class="si">{</span><span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s">"</span><span class="p">)</span>
+    <span class="nf">print</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="s">rule</span><span class="si">{</span><span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s"> took </span><span class="si">{</span><span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="sh">"</span><span class="p">)</span>
 </code></pre></div></div>
 
 <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>rule 0
@@ -790,7 +790,7 @@ rule124 took 1.1915581226348877
 
 <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">time_only</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">execution_time</span><span class="p">]</span>
 <span class="n">plt</span><span class="p">.</span><span class="nf">hist</span><span class="p">(</span><span class="n">time_only</span><span class="p">)</span>
-<span class="n">plt</span><span class="p">.</span><span class="nf">title</span><span class="p">(</span><span class="s">"histogram"</span><span class="p">)</span>
+<span class="n">plt</span><span class="p">.</span><span class="nf">title</span><span class="p">(</span><span class="sh">"</span><span class="s">histogram</span><span class="sh">"</span><span class="p">)</span>
 <span class="n">plt</span><span class="p">.</span><span class="nf">show</span><span class="p">()</span>
 </code></pre></div></div>
 
@@ -833,8 +833,8 @@ rule124 took 1.1915581226348877
 <span class="k">for</span> <span class="n">ax</span><span class="p">,</span> <span class="n">rule</span> <span class="ow">in</span> <span class="nf">zip</span><span class="p">(</span><span class="n">axes</span><span class="p">.</span><span class="n">flat</span><span class="p">,</span> <span class="n">rules</span><span class="p">):</span>
     <span class="n">x</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="nf">generate</span><span class="p">(</span><span class="n">rule</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">3</span><span class="o">*</span><span class="n">width</span><span class="p">,</span> <span class="n">steps</span><span class="o">=</span><span class="mi">3</span><span class="o">*</span><span class="n">width</span><span class="p">)</span>
     <span class="n">ax</span><span class="p">.</span><span class="nf">set_axis_off</span><span class="p">()</span>
-    <span class="n">ax</span><span class="p">.</span><span class="nf">imshow</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s">'none'</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">plt</span><span class="p">.</span><span class="n">cm</span><span class="p">.</span><span class="n">binary</span><span class="p">)</span>
-    <span class="n">ax</span><span class="p">.</span><span class="nf">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s">"</span><span class="si">{</span><span class="n">rule</span><span class="si">}</span><span class="s"> - </span><span class="si">{</span><span class="nf">bin</span><span class="p">(</span><span class="n">rule</span><span class="p">)</span><span class="si">}</span><span class="s">"</span><span class="p">,</span> <span class="n">fontdict</span> <span class="o">=</span> <span class="p">{</span><span class="s">'fontsize'</span><span class="p">:</span><span class="mi">70</span><span class="p">})</span>
+    <span class="n">ax</span><span class="p">.</span><span class="nf">imshow</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="sh">'</span><span class="s">none</span><span class="sh">'</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">plt</span><span class="p">.</span><span class="n">cm</span><span class="p">.</span><span class="n">binary</span><span class="p">)</span>
+    <span class="n">ax</span><span class="p">.</span><span class="nf">set_title</span><span class="p">(</span><span class="sa">f</span><span class="sh">"</span><span class="si">{</span><span class="n">rule</span><span class="si">}</span><span class="s"> - </span><span class="si">{</span><span class="nf">bin</span><span class="p">(</span><span class="n">rule</span><span class="p">)</span><span class="si">}</span><span class="sh">"</span><span class="p">,</span> <span class="n">fontdict</span> <span class="o">=</span> <span class="p">{</span><span class="sh">'</span><span class="s">fontsize</span><span class="sh">'</span><span class="p">:</span><span class="mi">70</span><span class="p">})</span>
 </code></pre></div></div>
 
 <figure>
@@ -1042,7 +1042,7 @@ rule124 took 1.1915581226348877
 
     <!-- Footer -->    <footer class="sticky-bottom mt-5">
       <div class="container">
-        © Copyright 2023 fedemengo  . Last updated: April 28, 2023.
+        © Copyright 2026 fedemengo  . Last updated: January 27, 2026.
       </div>
     </footer>
 
