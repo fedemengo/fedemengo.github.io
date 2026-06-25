@@ -4,6 +4,7 @@ title:  "Manjaro-i3 on x1 Carbon"
 description: "Step-by-step guide to get started"
 categories: linux
 hidden: true
+sitemap: false
 ---
 
 Below the configuration of Manjaro-i3 that I use on my Lenovo x1 Carbon. Shell configuration and other info at [manjaro-dotfiles](https://github.com/fedemengo/manjaro-dotfiles).<!--more-->

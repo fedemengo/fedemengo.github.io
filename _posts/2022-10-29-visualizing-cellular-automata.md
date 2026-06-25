@@ -5,6 +5,7 @@ date: 2022-10-28
 description:
 tags: computation automata
 hidden: true
+sitemap: false
 ---
 
 <script>
