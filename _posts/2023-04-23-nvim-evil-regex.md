@@ -1,24 +1,24 @@
 ---
 layout: post
-title:  How I made nvim 300x faster
-description: Tracking down an evil regex in vim and neovim
+title:  How I Made Neovim 300x Faster
+description: Tracking down an evil regex in Vim and Neovim
 tags: vim nvim regex
 categories: debugging
 ---
 
 ## Intro
 
-For a while, I've been working on a side [project](https://github.com/fedemengo/d2bist) that generates files with many 0s and 1s. As nvim is my primary editor, I frequently need to check or modify the contents of these files. However, to my great annoyance, whenever the files contained more than, let's say, tens of thousands of bit characters, nvim would hang for several seconds, minutes, or until I would SIGKILL it.
+For a while, I have been working on a side [project](https://github.com/fedemengo/d2bist) that generates files with long sequences of `0`s and `1`s. Nvim is my primary editor, so I often need to inspect or modify those files. To my great annoyance, whenever a file contained more than a few tens of thousands of bits, nvim would hang for several seconds, minutes, or until I finally SIGKILLed it.
 
-This kept happening, so I tried opening the same file with plain vim and to my surprise, the file would open up instantly. There had to be something wrong with my config, I thought. After all, adding more and more plugins to nvim undoubtedly makes the editor heavier and slower. It was time to find out where the problem was.
+This kept happening, so I tried opening the same file with plain Vim. To my surprise, it opened instantly. Something had to be wrong with my config. After all, adding more and more plugins to nvim undoubtedly makes the editor heavier and slower. It was time to find out what was going on.
 
 ## How
 
-I never had to debug performance issues in nvim before, so I didn't really have much to start with. My first suspicion was that the slow down was cause by some plugins. I tried to binary-search the plugin causing problems but even without plugins opening up that file was still slow.
+I had never debugged performance issues in nvim before, so I did not have much to start with. My first suspicion was that the slowdown was caused by a plugin. I tried to binary-search the offending plugin, but even without plugins, opening that file was still slow.
 
-I didn't havy many other ideas, looking at the helper I discovered the `--startuptime` flag. Since I didn't want to mess up my configuration I launched a docker container, clone and compile nvim. I made sure the problem was still present in the version from master and created an empty `init.lua`.
+I did not have many other ideas. Looking through the help, I discovered the `--startuptime` flag. Since I did not want to mess up my local configuration, I launched a Docker container, cloned and compiled nvim, verified that the problem was still present on `master`, and created an empty `init.lua`.
 
-Finally I launched
+Then I ran:
 
 ```sh
 root@ff1d74dcbc84:~# time nvim /test/data/data/pi_30_000 --startuptime vim-startup.log +qall
@@ -28,7 +28,7 @@ user    0m6.123s
 sys     0m0.010s
 ```
 
-which generated
+which generated:
 
 ```
 times in msec
@@ -57,23 +57,27 @@ times in msec
 6048.355  000.003: editing files in windows
 ```
 
-Looking at the logs, it's clear that something bad happened between `029.058` and `6048.212`. In particular, `require('vim.filetype.detect')` took $$\approx 6$$ seconds.
+Looking at the logs, it was clear that something bad happened between `029.058` and `6048.212`. In particular, `require('vim.filetype.detect')` took $$\approx 6$$ seconds.
 
-Armed with `rg` and `fd`, after some code diving, I understood what that line did. As the name suggests, it's used to infer the file type. There are a couple of ways nvim infers the file type. In case it's not obvious from the extension, it first checks for [shebangs](https://en.wikipedia.org/wiki/Shebang_(Unix)) and, if necessary, it attempts to guess the filetype from the file content.
+Armed with `rg` and `fd`, after some code diving, I understood what that line did. As the name suggests, it is used to infer the file type. Nvim has a couple of ways to do that. If the type is not obvious from the extension, it first checks for [shebangs](https://en.wikipedia.org/wiki/Shebang_(Unix)) and, if necessary, tries to guess the file type from the file contents.
 
-And that's where my problem was. The file contents are fed to a set of regex that, in case of a successful match, assigns a known filetype. For most of the regex, it's enough to test the first few lines of the file content. In my case, the file was a single long line of characters (30k to be exact). So my first idea was to limit the line each regex has to test to some "reasonable" upper bound, I think I set 1000.
+That was where my problem was. The file contents are fed to a set of regexes that assign a known file type when they match. For most of them, it is enough to test only the first few lines. In my case, the file was a single long line of characters, 30k to be exact. My first idea was to limit the amount of each line that every regex had to test to some "reasonable" upper bound. I think I used 1000 characters.
 
-So I changed that, recompiled nvim, and opened up the file again.
+I changed that, recompiled nvim, and opened the file again.
 
 Yep, the fix worked!
 
-I pushed the fix and opened a PR. After some time, a nvim core maintainer had a chance to look at the fix and mentioned that nvim logic matches vim's one. So to prevent any major divergence between the two, they suggested I push the fix to vim first, and in case it was accepted, they would port it to nvim. I think that's only fair.
+I pushed the fix and opened a PR. After some time, an nvim core maintainer looked at it and mentioned that nvim's logic matches Vim's. To avoid unnecessary divergence between the two projects, they suggested that I push the fix to Vim first. If it was accepted there, they would port it to nvim. Fair enough.
 
-But could I really push that fix to vim? After all, vim didn't suffer from this, so it seemed unreasonable to cap the file content to solve performance problems that were not there. I wanted to fix the issue where it made more sense.
+But could I really push that fix to Vim? Vim did not have the same performance problem, so it seemed unreasonable to cap the file content there just to solve an nvim-specific slowdown. I wanted to fix the issue where the fix actually made sense.
 
-After some rubber ducking with ChatGPT and some looking around the internet, I read that vim regex engine is particularly efficient. Nvim, on the other hand, uses Lua's builtin regex. Could it be that the two had this magnitude of performance difference? Only one way to find out. Let's write some code to test it.
+After some rubber ducking with ChatGPT and some searching, I read that Vim's regex engine is particularly efficient. Nvim, on the other hand, uses Lua's built-in pattern matching for this code path. Could the two really have this much of a performance difference? Only one way to find out: write some code and test it.
 
-So I basically rewrote [this](https://github.com/neovim/neovim/blob/53f36806f1b5107c0570ffbf57180a8e08f45b2e/runtime/lua/vim/filetype/detect.lua#L1660) into a script
+I started from [the relevant nvim filetype detection code](https://github.com/neovim/neovim/blob/53f36806f1b5107c0570ffbf57180a8e08f45b2e/runtime/lua/vim/filetype/detect.lua#L1660).
+
+<details markdown="1">
+<summary>So I basically rewrote this into a script and ran it against the file that was causing problems:</summary>
+
 ```lua
 local patterns_text = {
     "^#compdef\\>",
@@ -150,9 +154,13 @@ else
 end
 ```
 
-and run it against the file that was causing me problems `lua test.lua pi_30_000`
+</details>
 
-Soon enough I had found the problematic regex
+```sh
+lua test.lua pi_30_000
+```
+
+Soon enough, I found the problematic regex:
 
 ```
 curr: '^RCS file:', Time: 0.000s. next: '^CVS:'
@@ -175,17 +183,65 @@ curr: 'TAK 2000', Time: 0.000s. next: 'S Y S T E M S   I M P R O V E D '
 curr: 'S Y S T E M S   I M P R O V E D ', Time: 0.000s. next: 'Run Date: '
 ```
 
-The regex `[0-9:%.]* *execve%(` equivalent to `[0-9:.]* *execve(` without regex escape chars took $$\approx 4.4$$ seconds to evaluate, which is crazy considering all the other regexes evaluated instantly. I'm no expert in regexes but I think the issues is with a backtracking explosion. Remember the [naive string searching](https://en.wikipedia.org/wiki/String-searching_algorithm#Naive_string_search)?
+The regex `[0-9:%.]* *execve%(`, equivalent to `[0-9:.]* *execve(` without the regex escape characters, took $$\approx 4.4$$ seconds to evaluate. That is wild, considering all the other regexes evaluated instantly. I am no regex expert, but I think the issue was a backtracking explosion. Remember [naive string searching](https://en.wikipedia.org/wiki/String-searching_algorithm#Naive_string_search)?
 
-Anyway, the trend was close to quadratic, on paper the regex had to perform $$\sum_{i=1}^N i = \frac{N(N+1)}{2} = O(N^2)$$ matches.
+Anyway, the trend was close to quadratic. Fitting the measured startup times gives:
 
+$$t(N) \approx 0.007754 \cdot N^{2.001}$$
+
+where $$N$$ is the file-size label in thousands of characters and $$t(N)$$ is the startup time in seconds. The fitted exponent is effectively $$2$$, so the measured behavior is quadratic, or $$O(N^2)$$.
+
+{% comment %}
 {% include figure.html path="assets/img/blog/2023-04-23/nvim-plot.png" class="img-fluid rounded" %}
+{% endcomment %}
 
-I spent some time trying to understand why it was written that way, after all `[0-9:.]* *execve(` is equivalent to `execve(` given that both `[0-9:.]` and `\s` are matched zero or more times, so they don't really matter. This would not have been the case if the regex had been anchored.
+```sh
+                                   nvim startup: evil regex timing
+      ┌──────────────────────────────────────────────────────────────────────────────────────┐
+7801.9┤ .. N^2                                                                              x│
+      │ xx data                                                                            . │
+      │                                                                                   .  │
+      │                                                                                 ..   │
+      │                                                                                .     │
+6501.7┤                                                                              ..      │
+      │                                                                             .        │
+      │                                                                           ..         │
+      │                                                                          .           │
+      │                                                                        x.            │
+      │                                                                       .              │
+5201.5┤                                                                     ..               │
+      │                                                                    .                 │
+      │                                                                  ..                  │
+      │                                                                x.                    │
+      │                                                              ..                      │
+3901.3┤                                                           ...                        │
+      │                                                         ..                           │
+      │                                                       ..                             │
+      │                                                     ..                               │
+      │                                                   ..                                 │
+2601.2┤                                                 ..                                   │
+      │                                              ...                                     │
+      │                                            ..                                        │
+      │                                          x.                                          │
+      │                                       ...                                            │
+      │                                    ...                                               │
+1301.0┤                                 ...                                                  │
+      │                             ....                                                     │
+      │                         ....                                                         │
+      │                     x...                                                             │
+      │            .........                                                                 │
+   0.8┤x.x.....x...                                                                          │
+      └┬────────────────────┬─────────────────────┬────────────────────┬────────────────────┬┘
+      1.0                 25.8                  50.5                 75.2               100.0
+seconds                         normalized file size (1 ~= 10k chars)
 
-Finally! Something is actually wrong (in vim too) and should be fixed.
+```
 
-I gave it a shot with the simplified regex. Comparing the time to open up the file before the fix
+I spent some time trying to understand why it was written that way. After all, `[0-9:.]* *execve(` is equivalent to `execve(`, because both `[0-9:.]` and the space are matched zero or more times. They do not constrain the match unless the regex is anchored.
+
+Finally! Something was actually wrong, in Vim too, and it should be fixed.
+
+I gave it a shot with the simplified regex. Here is the time to open the file before the fix:
 
 ```sh
 root@ff1d74dcbc84:~# time nvim /test/data/data/pi_30_000 +qall
@@ -195,7 +251,7 @@ user    0m6.123s
 sys     0m0.010s
 ```
 
-and after the fix
+and after:
 
 ```sh
 root@ff1d74dcbc84:~# time VIMRUNTIME=/neovim/runtime/ /neovim/build/bin/nvim /test/data/data/pi_30_000 +qall
@@ -204,11 +260,12 @@ real    0m0.021s
 user    0m0.014s
 sys     0m0.000s
 ```
-just awesome.
 
-I updated the PR in nvim and opened a PR in vim with the simplified version of the regex. I also noticed that the very same regex had undergone some changes and it also used to be anchored. I think somewhere along the line an edit wasn't really equivalent, so I added a test to prevent future regressions. You know, just for good measure.
+Much better.
 
-After some [back and forth](https://github.com/vim/vim/pull/12220) with @brammool on how to tackle this, I ended up with a fix that eventually got [accepted](https://github.com/vim/vim/commit/6e5a9f948221b52caaaf106079cb3430c4dd7c77) into vim codebase and [ported](https://github.com/neovim/neovim/commit/6d9f5b6bf0fc324b33ce01f74a6030c9271b1a01) into nvim.
+I updated the nvim PR and opened a Vim PR with the simplified regex. I also noticed that the same regex had changed over time and used to be anchored. I think an edit somewhere along the line was not actually equivalent, so I added a test to prevent future regressions. You know, just for good measure.
+
+After some [back and forth](https://github.com/vim/vim/pull/12220) with @brammool on how to tackle this, I ended up with a fix that eventually got [accepted](https://github.com/vim/vim/commit/6e5a9f948221b52caaaf106079cb3430c4dd7c77) into the Vim codebase and [ported](https://github.com/neovim/neovim/commit/6d9f5b6bf0fc324b33ce01f74a6030c9271b1a01) into nvim.
 
 ```diff
 	 || line4 =~ '^%.\{-}[Vv]irata'
@@ -225,19 +282,18 @@ After some [back and forth](https://github.com/vim/vim/pull/12220) with @brammoo
     # VSE JCL
     elseif line1 =~ '^\* $$ JOB\>' || line1 =~ '^// *JOB\>'
 ```
-Now that I look at it I think `^[0-9:.]* *execve(` was enough to guarantee optimal performances and correctness, but whatever.
+Looking at it now, I think `^[0-9:.]* *execve(` would have been enough to guarantee both correctness and good performance, but whatever.
 
-And that folks, is how I made nvim $$6.142 / 0.021 = 292.48 \approx 300$$ times faster ;)
+And that, folks, is how I made nvim $$6.142 / 0.021 = 292.48 \approx 300$$ times faster.
 
 ## Conclusion
 
 This was an interesting and fun exercise in troubleshooting.
 
-It made me appreciate open source and hate regex even more! After this was done I started to wonder if a tool to [simplify](https://en.wikipedia.org/wiki/NFA_minimization) regexes exists and how [difficult](https://cstheory.blogoverflow.com/2011/08/on-learning-regular-languages/) it would be to make one. Maybe I'll give it a shot.
+It made me appreciate open source and hate regex even more. After this was done, I started to wonder whether a tool to [simplify](https://en.wikipedia.org/wiki/NFA_minimization) regexes exists, and how [difficult](https://cstheory.blogoverflow.com/2011/08/on-learning-regular-languages/) it would be to make one. Maybe I will give it a shot.
 
-Another interesting way to investigate slow downs in nvim that I found is [this](https://github.com/stevearc/profile.nvim) amazing profiling plugin. In case `--startuptime` doesn't give enough or any actionable information.
+Another interesting way to investigate slowdowns in nvim is [this](https://github.com/stevearc/profile.nvim) excellent profiling plugin. It is useful when `--startuptime` does not give enough actionable information.
 
-For example, this is what it showed for my problem. I added a small [wrapper](https://github.com/fedemengo/nvim/blob/5edbcf57707a5a987275dad8f1e78f3b13efddc4/fnl/mods/dev/profile.fnl) to my config and followed the intruction on the repo on how to generate a profile of the startup. And finally inspected the profile with [perfetto](https://github.com/google/perfetto).
+For example, this is what it showed for my problem. I added a small [wrapper](https://github.com/fedemengo/nvim/blob/5edbcf57707a5a987275dad8f1e78f3b13efddc4/fnl/mods/dev/profile.fnl) to my config, followed the repository instructions to generate a startup profile, and inspected the result with [Perfetto](https://github.com/google/perfetto).
 
 {% include figure.html path="assets/img/blog/2023-04-23/profiler.png" class="img-fluid rounded" zoomable=true %}
-
