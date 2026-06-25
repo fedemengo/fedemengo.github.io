@@ -1,14 +1,18 @@
-version: "3"
-
 services:
-  jekyll_custom:
-    build: .
-    image: al-folio-local-docker
-    container_name: al-folio-local-website
+  jekyll:
+    image: ghcr.io/fedemengo/al-folio:1.0.0
     command: bash -c "
-      rm -f Gemfile.lock
-      && bundler exec jekyll serve --watch --port=8080 --host=0.0.0.0 --livereload --verbose --trace"
+      rm -f Gemfile.lock &&
+      bundler exec jekyll serve --watch --port=8080 --host=0.0.0.0 --incremental --livereload"
     ports:
       - 8080:8080
-    volumes:
-      - .:/srv/jekyll
+
+    develop:
+      watch:
+        - action: sync
+          path: .
+          target: /srv/jekyll
+          ignore:
+            - node_modules/
+            - _site/
+
