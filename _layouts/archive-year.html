@@ -13,6 +13,9 @@ layout: default
     <div class="table-responsive">
       <table class="table table-sm table-borderless">
         {% for post in page.posts %}
+        {% if post.hidden %}
+          {% continue %}
+        {% endif %}
         <tr>
           <th scope="row">{{ post.date | date: "%b %-d, %Y" }}</th>
           <td>
