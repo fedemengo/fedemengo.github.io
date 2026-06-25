@@ -10,9 +10,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>SIGCHLD Handler | fedemengo</title>
+    <title>2025 | fedemengo</title>
     <meta name="author" content="fedemengo  ">
-    <meta name="description" content="Intercept SIGCHLD without polling or blocking">
+    <meta name="description" content="">
     <meta name="keywords" content="jekyll, jekyll-theme, academic-website, portfolio-website">
 
 
@@ -33,7 +33,7 @@
     <link rel="shortcut icon" href="/assets/img/code.png">
     
     <link rel="stylesheet" href="/assets/css/main.css">
-    <link rel="canonical" href="https://fedemengo.github.io/blog/2018/02/SIGCHLD-handler/">
+    <link rel="canonical" href="https://fedemengo.github.io/blog/2025/">
 
     <!-- Dark Mode -->
     
@@ -111,121 +111,27 @@
 
     <!-- Content -->
     <div class="container mt-5">
-      <!-- _layouts/post.html -->
-
-<div class="post">
+      <div class="post">
 
   <header class="post-header">
-    <h1 class="post-title">SIGCHLD Handler</h1>
-    <p class="post-meta">February 12, 2018</p>
-    <p class="post-tags">
-      <a href="/blog/2018"> <i class="fas fa-calendar fa-sm"></i> 2018 </a>
-        ·  
-        <a href="/blog/tag/processes">
-          <i class="fas fa-hashtag fa-sm"></i> processes</a>  
-          <a href="/blog/tag/c">
-          <i class="fas fa-hashtag fa-sm"></i> c</a>  
-          
-        ·  
-        <a href="/blog/category/unix">
-          <i class="fas fa-tag fa-sm"></i> unix</a>  
-          
-
-    </p>
+    <h1 class="post-title"> <i class="fas fa-calendar fa-sm"></i> 2025 </h1>
+    <p class="post-description"> an archive of posts from this year </p>
   </header>
 
-  <article class="post-content">
-    <p>To prevent the accumulation of zombie children, a parent should <code class="language-plaintext highlighter-rouge">wait</code> to free their resources<!--more-->, it can do it in two ways</p>
-
-<ul>
-  <li>Using <code class="language-plaintext highlighter-rouge">wait()</code> or <code class="language-plaintext highlighter-rouge">waitpid()</code> without the <code class="language-plaintext highlighter-rouge">WNOHANG</code>, to block until a child terminates</li>
-  <li>Periodically perform a non blocking check (polling) using <code class="language-plaintext highlighter-rouge">waitpid()</code> specifing the <code class="language-plaintext highlighter-rouge">WNOHANG</code> flag.</li>
-</ul>
-
-<p>It’s possible to launch a handler whenever a child terminates (without wasting resources on blocking or polling). However it’s possible that if <code class="language-plaintext highlighter-rouge">SIGCHLD</code> are generated in quick succession some of them get lost, since they are not queue anywhere and the handler might be still executing for an already terminated child. A single wait inside the signal handler would not work. There is a smart solution:</p>
-
-<figure class="highlight"><pre><code class="language-c" data-lang="c"><span class="k">while</span><span class="p">(</span><span class="n">waitpid</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="n">WNOHANG</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="k">continue</span><span class="p">;</span></code></pre></figure>
-
-<p>In this way the parent wait for any child processes (pid = -1) and while there are zombie process (<code class="language-plaintext highlighter-rouge">waitpid()</code> return value is <code class="language-plaintext highlighter-rouge">&gt;0</code>) it keep looping on calling wait.</p>
-
-<p>Example with <code class="language-plaintext highlighter-rouge">SIGCHLD</code> handler</p>
-
-<figure class="highlight"><pre><code class="language-c" data-lang="c"><span class="cp">#include</span> <span class="cpf">&lt;sys/wait.h&gt;</span><span class="cp">
-</span>
-<span class="kt">void</span> <span class="nf">sigchldHandler</span><span class="p">(</span><span class="kt">int</span> <span class="n">sig</span><span class="p">){</span>
-    <span class="kt">int</span> <span class="n">status</span><span class="p">,</span> <span class="n">savedErrno</span><span class="p">;</span>
-    <span class="n">pid_t</span> <span class="n">childPid</span><span class="p">;</span>
-
-    <span class="n">savedErrno</span> <span class="o">=</span> <span class="n">errno</span><span class="p">;</span>
-    <span class="k">while</span><span class="p">((</span><span class="n">childPid</span> <span class="o">=</span> <span class="n">waitpid</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">status</span><span class="p">,</span> <span class="n">WNOHANG</span><span class="p">))</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">){</span>
-        <span class="n">printf</span><span class="p">(</span><span class="s">"child %ld terminates</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">childPid</span><span class="p">);</span>
-    <span class="p">}</span>
-    <span class="n">errno</span> <span class="o">=</span> <span class="n">savedErrno</span><span class="p">;</span>
-<span class="p">}</span>
-
-<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">argv</span><span class="p">[]){</span>
-    <span class="k">struct</span> <span class="n">sigaction</span> <span class="n">sa</span><span class="p">;</span>
-    <span class="kt">int</span> <span class="n">i</span><span class="p">,</span> <span class="n">childNum</span> <span class="o">=</span> <span class="mi">5</span><span class="p">;</span>
-
-    <span class="n">sigemptyset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">sa</span><span class="p">.</span><span class="n">sa_mask</span><span class="p">);</span>
-    <span class="n">sa</span><span class="p">.</span><span class="n">sa_flags</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-    <span class="n">sa</span><span class="p">.</span><span class="n">sa_handler</span> <span class="o">=</span> <span class="n">sigchlHandler</span><span class="p">;</span>		<span class="c1">// address of handler function</span>
-
-    <span class="k">if</span><span class="p">(</span><span class="n">sigaction</span><span class="p">(</span><span class="n">SIGCHLD</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">sa</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">)</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">errExit</span><span class="p">(</span><span class="s">"sigaction"</span><span class="p">);</span>
-
-    <span class="k">for</span><span class="p">(</span><span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">i</span><span class="o">&lt;</span><span class="n">childNum</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">){</span>
-        <span class="k">switch</span><span class="p">(</span><span class="n">fork</span><span class="p">()){</span>
-            <span class="c1">// ...</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-<span class="p">}</span></code></pre></figure>
-
-<p>Usually a <code class="language-plaintext highlighter-rouge">SIGCHLD</code> is delivered to the parent even when one of its children stops. To prevent that the flag <code class="language-plaintext highlighter-rouge">SA_NOCLDSTOP</code> must be used in the signal handler flags (<code class="language-plaintext highlighter-rouge">sa.sa_flags = SA_NOCLDSTOP</code>).</p>
-
-
+  <article>
+    <div class="table-responsive">
+      <table class="table table-sm table-borderless">
+        
+        <tr>
+          <th scope="row">Oct 12, 2025</th>
+          <td>
+              <a class="post-link" href="/blog/2025/10/money-laundrying/">Money Laundrying</a>
+          </td>
+        </tr>
+      
+      </table>
+    </div>
   </article>
-
-
-  
-    
-    <br>
-    <hr>
-    <br>
-    <ul class="list-disc pl-8"></ul>
-
-    <!-- Adds related posts to the end of an article -->
-    <!-- h2 class="text-3xl font-semibold mb-4 mt-12">Enjoy Reading This Article?</h2 -->
-    <p class="mb-2">Here are some more articles you might like to read next:</p>
-  
-
-  <li class="my-2">
-    <a class="text-pink-700 underline font-semibold hover:text-pink-800" href="/blog/2025/10/money-laundrying/">Money Laundrying</a>
-  </li>
-
-  
-
-  <li class="my-2">
-    <a class="text-pink-700 underline font-semibold hover:text-pink-800" href="/blog/2023/04/nvim-evil-regex/">How I Made Neovim 300x Faster</a>
-  </li>
-
-  
-
-  <li class="my-2">
-    <a class="text-pink-700 underline font-semibold hover:text-pink-800" href="/blog/2022/10/visualizing-cellular-automata/">Visualizing cellular automata</a>
-  </li>
-
-  
-
-  <li class="my-2">
-    <a class="text-pink-700 underline font-semibold hover:text-pink-800" href="/blog/2022/10/poincare-recurrence-time/">Poincaré recurrence time in cellular automata</a>
-  </li>
-
-  
-
-  <li class="my-2">
-    <a class="text-pink-700 underline font-semibold hover:text-pink-800" href="/blog/2021/01/tomtom-spark-linux/">TomTom Spark on Linux</a>
-  </li>
 
 </div>
 

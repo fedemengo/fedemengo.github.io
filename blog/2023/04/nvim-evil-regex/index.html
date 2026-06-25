@@ -10,9 +10,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>How I made nvim 300x faster | fedemengo</title>
+    <title>How I Made Neovim 300x Faster | fedemengo</title>
     <meta name="author" content="fedemengo  ">
-    <meta name="description" content="Tracking down an evil regex in vim and neovim">
+    <meta name="description" content="Tracking down an evil regex in Vim and Neovim">
     <meta name="keywords" content="jekyll, jekyll-theme, academic-website, portfolio-website">
 
 
@@ -116,7 +116,7 @@
 <div class="post">
 
   <header class="post-header">
-    <h1 class="post-title">How I made nvim 300x faster</h1>
+    <h1 class="post-title">How I Made Neovim 300x Faster</h1>
     <p class="post-meta">April 23, 2023</p>
     <p class="post-tags">
       <a href="/blog/2023"> <i class="fas fa-calendar fa-sm"></i> 2023 </a>
@@ -139,17 +139,17 @@
   <article class="post-content">
     <h2 id="intro">Intro</h2>
 
-<p>For a while, I’ve been working on a side <a href="https://github.com/fedemengo/d2bist" rel="external nofollow noopener" target="_blank">project</a> that generates files with many 0s and 1s. As nvim is my primary editor, I frequently need to check or modify the contents of these files. However, to my great annoyance, whenever the files contained more than, let’s say, tens of thousands of bit characters, nvim would hang for several seconds, minutes, or until I would SIGKILL it.</p>
+<p>For a while, I have been working on a side <a href="https://github.com/fedemengo/d2bist" rel="external nofollow noopener" target="_blank">project</a> that generates files with long sequences of <code class="language-plaintext highlighter-rouge">0</code>s and <code class="language-plaintext highlighter-rouge">1</code>s. Nvim is my primary editor, so I often need to inspect or modify those files. To my great annoyance, whenever a file contained more than a few tens of thousands of bits, nvim would hang for several seconds, minutes, or until I finally SIGKILLed it.</p>
 
-<p>This kept happening, so I tried opening the same file with plain vim and to my surprise, the file would open up instantly. There had to be something wrong with my config, I thought. After all, adding more and more plugins to nvim undoubtedly makes the editor heavier and slower. It was time to find out where the problem was.</p>
+<p>This kept happening, so I tried opening the same file with plain Vim. To my surprise, it opened instantly. Something had to be wrong with my config. After all, adding more and more plugins to nvim undoubtedly makes the editor heavier and slower. It was time to find out what was going on.</p>
 
 <h2 id="how">How</h2>
 
-<p>I never had to debug performance issues in nvim before, so I didn’t really have much to start with. My first suspicion was that the slow down was cause by some plugins. I tried to binary-search the plugin causing problems but even without plugins opening up that file was still slow.</p>
+<p>I had never debugged performance issues in nvim before, so I did not have much to start with. My first suspicion was that the slowdown was caused by a plugin. I tried to binary-search the offending plugin, but even without plugins, opening that file was still slow.</p>
 
-<p>I didn’t havy many other ideas, looking at the helper I discovered the <code class="language-plaintext highlighter-rouge">--startuptime</code> flag. Since I didn’t want to mess up my configuration I launched a docker container, clone and compile nvim. I made sure the problem was still present in the version from master and created an empty <code class="language-plaintext highlighter-rouge">init.lua</code>.</p>
+<p>I did not have many other ideas. Looking through the help, I discovered the <code class="language-plaintext highlighter-rouge">--startuptime</code> flag. Since I did not want to mess up my local configuration, I launched a Docker container, cloned and compiled nvim, verified that the problem was still present on <code class="language-plaintext highlighter-rouge">master</code>, and created an empty <code class="language-plaintext highlighter-rouge">init.lua</code>.</p>
 
-<p>Finally I launched</p>
+<p>Then I ran:</p>
 
 <div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>root@ff1d74dcbc84:~# <span class="nb">time </span>nvim /test/data/data/pi_30_000 <span class="nt">--startuptime</span> vim-startup.log +qall
 
@@ -158,7 +158,7 @@ user    0m6.123s
 sys     0m0.010s
 </code></pre></div></div>
 
-<p>which generated</p>
+<p>which generated:</p>
 
 <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>times in msec
  clock   self+sourced   self:  sourced script
@@ -186,24 +186,29 @@ sys     0m0.010s
 6048.355  000.003: editing files in windows
 </code></pre></div></div>
 
-<p>Looking at the logs, it’s clear that something bad happened between <code class="language-plaintext highlighter-rouge">029.058</code> and <code class="language-plaintext highlighter-rouge">6048.212</code>. In particular, <code class="language-plaintext highlighter-rouge">require('vim.filetype.detect')</code> took \(\approx 6\) seconds.</p>
+<p>Looking at the logs, it was clear that something bad happened between <code class="language-plaintext highlighter-rouge">029.058</code> and <code class="language-plaintext highlighter-rouge">6048.212</code>. In particular, <code class="language-plaintext highlighter-rouge">require('vim.filetype.detect')</code> took \(\approx 6\) seconds.</p>
 
-<p>Armed with <code class="language-plaintext highlighter-rouge">rg</code> and <code class="language-plaintext highlighter-rouge">fd</code>, after some code diving, I understood what that line did. As the name suggests, it’s used to infer the file type. There are a couple of ways nvim infers the file type. In case it’s not obvious from the extension, it first checks for <a href="https://en.wikipedia.org/wiki/Shebang_(Unix)" rel="external nofollow noopener" target="_blank">shebangs</a> and, if necessary, it attempts to guess the filetype from the file content.</p>
+<p>Armed with <code class="language-plaintext highlighter-rouge">rg</code> and <code class="language-plaintext highlighter-rouge">fd</code>, after some code diving, I understood what that line did. As the name suggests, it is used to infer the file type. Nvim has a couple of ways to do that. If the type is not obvious from the extension, it first checks for <a href="https://en.wikipedia.org/wiki/Shebang_(Unix)" rel="external nofollow noopener" target="_blank">shebangs</a> and, if necessary, tries to guess the file type from the file contents.</p>
 
-<p>And that’s where my problem was. The file contents are fed to a set of regex that, in case of a successful match, assigns a known filetype. For most of the regex, it’s enough to test the first few lines of the file content. In my case, the file was a single long line of characters (30k to be exact). So my first idea was to limit the line each regex has to test to some “reasonable” upper bound, I think I set 1000.</p>
+<p>That was where my problem was. The file contents are fed to a set of regexes that assign a known file type when they match. For most of them, it is enough to test only the first few lines. In my case, the file was a single long line of characters, 30k to be exact. My first idea was to limit the amount of each line that every regex had to test to some “reasonable” upper bound. I think I used 1000 characters.</p>
 
-<p>So I changed that, recompiled nvim, and opened up the file again.</p>
+<p>I changed that, recompiled nvim, and opened the file again.</p>
 
 <p>Yep, the fix worked!</p>
 
-<p>I pushed the fix and opened a PR. After some time, a nvim core maintainer had a chance to look at the fix and mentioned that nvim logic matches vim’s one. So to prevent any major divergence between the two, they suggested I push the fix to vim first, and in case it was accepted, they would port it to nvim. I think that’s only fair.</p>
+<p>I pushed the fix and opened a PR. After some time, an nvim core maintainer looked at it and mentioned that nvim’s logic matches Vim’s. To avoid unnecessary divergence between the two projects, they suggested that I push the fix to Vim first. If it was accepted there, they would port it to nvim. Fair enough.</p>
 
-<p>But could I really push that fix to vim? After all, vim didn’t suffer from this, so it seemed unreasonable to cap the file content to solve performance problems that were not there. I wanted to fix the issue where it made more sense.</p>
+<p>But could I really push that fix to Vim? Vim did not have the same performance problem, so it seemed unreasonable to cap the file content there just to solve an nvim-specific slowdown. I wanted to fix the issue where the fix actually made sense.</p>
 
-<p>After some rubber ducking with ChatGPT and some looking around the internet, I read that vim regex engine is particularly efficient. Nvim, on the other hand, uses Lua’s builtin regex. Could it be that the two had this magnitude of performance difference? Only one way to find out. Let’s write some code to test it.</p>
+<p>After some rubber ducking with ChatGPT and some searching, I read that Vim’s regex engine is particularly efficient. Nvim, on the other hand, uses Lua’s built-in pattern matching for this code path. Could the two really have this much of a performance difference? Only one way to find out: write some code and test it.</p>
 
-<p>So I basically rewrote <a href="https://github.com/neovim/neovim/blob/53f36806f1b5107c0570ffbf57180a8e08f45b2e/runtime/lua/vim/filetype/detect.lua#L1660" rel="external nofollow noopener" target="_blank">this</a> into a script</p>
-<div class="language-lua highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">local</span> <span class="n">patterns_text</span> <span class="o">=</span> <span class="p">{</span>
+<p>I started from <a href="https://github.com/neovim/neovim/blob/53f36806f1b5107c0570ffbf57180a8e08f45b2e/runtime/lua/vim/filetype/detect.lua#L1660" rel="external nofollow noopener" target="_blank">the relevant nvim filetype detection code</a>.</p>
+
+<details>
+  <summary>So I basically rewrote this into a script and ran it against the file that was causing problems:</summary>
+
+  <div class="language-lua highlighter-rouge">
+<div class="highlight"><pre class="highlight"><code><span class="kd">local</span> <span class="n">patterns_text</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">"^#compdef</span><span class="se">\\</span><span class="s2">&gt;"</span><span class="p">,</span>
     <span class="s2">"^#autoload</span><span class="se">\\</span><span class="s2">&gt;"</span><span class="p">,</span>
     <span class="s2">"^From [a-zA-Z][a-zA-Z_0-9%.=%-]*(@[^ ]*)? .* 19%d%d$"</span><span class="p">,</span>
@@ -276,11 +281,14 @@ sys     0m0.010s
     <span class="n">file</span><span class="p">:</span><span class="n">close</span><span class="p">()</span>
     <span class="n">match_from_text</span><span class="p">({</span><span class="n">content</span><span class="p">})</span>
 <span class="k">end</span>
+</code></pre></div>  </div>
+
+</details>
+
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>lua test.lua pi_30_000
 </code></pre></div></div>
 
-<p>and run it against the file that was causing me problems <code class="language-plaintext highlighter-rouge">lua test.lua pi_30_000</code></p>
-
-<p>Soon enough I had found the problematic regex</p>
+<p>Soon enough, I found the problematic regex:</p>
 
 <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>curr: '^RCS file:', Time: 0.000s. next: '^CVS:'
 curr: '^CVS:', Time: 0.000s. next: '^CVS: '
@@ -302,31 +310,60 @@ curr: 'TAK 2000', Time: 0.000s. next: 'S Y S T E M S   I M P R O V E D '
 curr: 'S Y S T E M S   I M P R O V E D ', Time: 0.000s. next: 'Run Date: '
 </code></pre></div></div>
 
-<p>The regex <code class="language-plaintext highlighter-rouge">[0-9:%.]* *execve%(</code> equivalent to <code class="language-plaintext highlighter-rouge">[0-9:.]* *execve(</code> without regex escape chars took \(\approx 4.4\) seconds to evaluate, which is crazy considering all the other regexes evaluated instantly. I’m no expert in regexes but I think the issues is with a backtracking explosion. Remember the <a href="https://en.wikipedia.org/wiki/String-searching_algorithm#Naive_string_search" rel="external nofollow noopener" target="_blank">naive string searching</a>?</p>
+<p>The regex <code class="language-plaintext highlighter-rouge">[0-9:%.]* *execve%(</code>, equivalent to <code class="language-plaintext highlighter-rouge">[0-9:.]* *execve(</code> without the regex escape characters, took \(\approx 4.4\) seconds to evaluate. That is wild, considering all the other regexes evaluated instantly. I am no regex expert, but I think the issue was a backtracking explosion. Remember <a href="https://en.wikipedia.org/wiki/String-searching_algorithm#Naive_string_search" rel="external nofollow noopener" target="_blank">naive string searching</a>?</p>
 
-<p>Anyway, the trend was close to quadratic, on paper the regex had to perform \(\sum_{i=1}^N i = \frac{N(N+1)}{2} = O(N^2)\) matches.</p>
+<p>Anyway, the trend was close to quadratic. Fitting the measured startup times gives:</p>
 
-<figure>
+\[t(N) \approx 0.007754 \cdot N^{2.001}\]
 
-  <picture>
-    
-    <source class="responsive-img-srcset" media="(max-width: 480px)" srcset="/assets/img/blog/2023-04-23/nvim-plot-480.webp"></source>
-    <source class="responsive-img-srcset" media="(max-width: 800px)" srcset="/assets/img/blog/2023-04-23/nvim-plot-800.webp"></source>
-    <source class="responsive-img-srcset" media="(max-width: 1400px)" srcset="/assets/img/blog/2023-04-23/nvim-plot-1400.webp"></source>
-    
+<p>where \(N\) is the file-size label in thousands of characters and \(t(N)\) is the startup time in seconds. The fitted exponent is effectively \(2\), so the measured behavior is quadratic, or \(O(N^2)\).</p>
 
-    <!-- Fallback to the original file -->
-    <img src="/assets/img/blog/2023-04-23/nvim-plot.png" class="img-fluid rounded" width="auto" height="auto" onerror="this.onerror=null; $('.responsive-img-srcset').remove();">
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                                   nvim startup: evil regex timing
+      ┌──────────────────────────────────────────────────────────────────────────────────────┐
+7801.9┤ .. N^2                                                                              x│
+      │ xx data                                                                            <span class="nb">.</span> │
+      │                                                                                   <span class="nb">.</span>  │
+      │                                                                                 ..   │
+      │                                                                                <span class="nb">.</span>     │
+6501.7┤                                                                              ..      │
+      │                                                                             <span class="nb">.</span>        │
+      │                                                                           ..         │
+      │                                                                          <span class="nb">.</span>           │
+      │                                                                        x.            │
+      │                                                                       <span class="nb">.</span>              │
+5201.5┤                                                                     ..               │
+      │                                                                    <span class="nb">.</span>                 │
+      │                                                                  ..                  │
+      │                                                                x.                    │
+      │                                                              ..                      │
+3901.3┤                                                           ...                        │
+      │                                                         ..                           │
+      │                                                       ..                             │
+      │                                                     ..                               │
+      │                                                   ..                                 │
+2601.2┤                                                 ..                                   │
+      │                                              ...                                     │
+      │                                            ..                                        │
+      │                                          x.                                          │
+      │                                       ...                                            │
+      │                                    ...                                               │
+1301.0┤                                 ...                                                  │
+      │                             ....                                                     │
+      │                         ....                                                         │
+      │                     x...                                                             │
+      │            .........                                                                 │
+   0.8┤x.x.....x...                                                                          │
+      └┬────────────────────┬─────────────────────┬────────────────────┬────────────────────┬┘
+      1.0                 25.8                  50.5                 75.2               100.0
+seconds                         normalized file size <span class="o">(</span>1 ~<span class="o">=</span> 10k chars<span class="o">)</span>
 
-  </picture>
+</code></pre></div></div>
 
-</figure>
+<p>I spent some time trying to understand why it was written that way. After all, <code class="language-plaintext highlighter-rouge">[0-9:.]* *execve(</code> is equivalent to <code class="language-plaintext highlighter-rouge">execve(</code>, because both <code class="language-plaintext highlighter-rouge">[0-9:.]</code> and the space are matched zero or more times. They do not constrain the match unless the regex is anchored.</p>
 
-<p>I spent some time trying to understand why it was written that way, after all <code class="language-plaintext highlighter-rouge">[0-9:.]* *execve(</code> is equivalent to <code class="language-plaintext highlighter-rouge">execve(</code> given that both <code class="language-plaintext highlighter-rouge">[0-9:.]</code> and <code class="language-plaintext highlighter-rouge">\s</code> are matched zero or more times, so they don’t really matter. This would not have been the case if the regex had been anchored.</p>
+<p>Finally! Something was actually wrong, in Vim too, and it should be fixed.</p>
 
-<p>Finally! Something is actually wrong (in vim too) and should be fixed.</p>
-
-<p>I gave it a shot with the simplified regex. Comparing the time to open up the file before the fix</p>
+<p>I gave it a shot with the simplified regex. Here is the time to open the file before the fix:</p>
 
 <div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>root@ff1d74dcbc84:~# <span class="nb">time </span>nvim /test/data/data/pi_30_000 +qall
 
@@ -335,7 +372,7 @@ user    0m6.123s
 sys     0m0.010s
 </code></pre></div></div>
 
-<p>and after the fix</p>
+<p>and after:</p>
 
 <div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>root@ff1d74dcbc84:~# <span class="nb">time </span><span class="nv">VIMRUNTIME</span><span class="o">=</span>/neovim/runtime/ /neovim/build/bin/nvim /test/data/data/pi_30_000 +qall
 
@@ -343,11 +380,12 @@ real    0m0.021s
 user    0m0.014s
 sys     0m0.000s
 </code></pre></div></div>
-<p>just awesome.</p>
 
-<p>I updated the PR in nvim and opened a PR in vim with the simplified version of the regex. I also noticed that the very same regex had undergone some changes and it also used to be anchored. I think somewhere along the line an edit wasn’t really equivalent, so I added a test to prevent future regressions. You know, just for good measure.</p>
+<p>Much better.</p>
 
-<p>After some <a href="https://github.com/vim/vim/pull/12220" rel="external nofollow noopener" target="_blank">back and forth</a> with @brammool on how to tackle this, I ended up with a fix that eventually got <a href="https://github.com/vim/vim/commit/6e5a9f948221b52caaaf106079cb3430c4dd7c77" rel="external nofollow noopener" target="_blank">accepted</a> into vim codebase and <a href="https://github.com/neovim/neovim/commit/6d9f5b6bf0fc324b33ce01f74a6030c9271b1a01" rel="external nofollow noopener" target="_blank">ported</a> into nvim.</p>
+<p>I updated the nvim PR and opened a Vim PR with the simplified regex. I also noticed that the same regex had changed over time and used to be anchored. I think an edit somewhere along the line was not actually equivalent, so I added a test to prevent future regressions. You know, just for good measure.</p>
+
+<p>After some <a href="https://github.com/vim/vim/pull/12220" rel="external nofollow noopener" target="_blank">back and forth</a> with @brammool on how to tackle this, I ended up with a fix that eventually got <a href="https://github.com/vim/vim/commit/6e5a9f948221b52caaaf106079cb3430c4dd7c77" rel="external nofollow noopener" target="_blank">accepted</a> into the Vim codebase and <a href="https://github.com/neovim/neovim/commit/6d9f5b6bf0fc324b33ce01f74a6030c9271b1a01" rel="external nofollow noopener" target="_blank">ported</a> into nvim.</p>
 
 <div class="language-diff highlighter-rouge"><div class="highlight"><pre class="highlight"><code>	 || line4 =~ '^%.\{-}[Vv]irata'
 	 || line5 =~ '^%.\{-}[Vv]irata'
@@ -363,19 +401,19 @@ sys     0m0.000s
 </span>    # VSE JCL
     elseif line1 =~ '^\* $$ JOB\&gt;' || line1 =~ '^// *JOB\&gt;'
 </code></pre></div></div>
-<p>Now that I look at it I think <code class="language-plaintext highlighter-rouge">^[0-9:.]* *execve(</code> was enough to guarantee optimal performances and correctness, but whatever.</p>
+<p>Looking at it now, I think <code class="language-plaintext highlighter-rouge">^[0-9:.]* *execve(</code> would have been enough to guarantee both correctness and good performance, but whatever.</p>
 
-<p>And that folks, is how I made nvim \(6.142 / 0.021 = 292.48 \approx 300\) times faster ;)</p>
+<p>And that, folks, is how I made nvim \(6.142 / 0.021 = 292.48 \approx 300\) times faster.</p>
 
 <h2 id="conclusion">Conclusion</h2>
 
 <p>This was an interesting and fun exercise in troubleshooting.</p>
 
-<p>It made me appreciate open source and hate regex even more! After this was done I started to wonder if a tool to <a href="https://en.wikipedia.org/wiki/NFA_minimization" rel="external nofollow noopener" target="_blank">simplify</a> regexes exists and how <a href="https://cstheory.blogoverflow.com/2011/08/on-learning-regular-languages/" rel="external nofollow noopener" target="_blank">difficult</a> it would be to make one. Maybe I’ll give it a shot.</p>
+<p>It made me appreciate open source and hate regex even more. After this was done, I started to wonder whether a tool to <a href="https://en.wikipedia.org/wiki/NFA_minimization" rel="external nofollow noopener" target="_blank">simplify</a> regexes exists, and how <a href="https://cstheory.blogoverflow.com/2011/08/on-learning-regular-languages/" rel="external nofollow noopener" target="_blank">difficult</a> it would be to make one. Maybe I will give it a shot.</p>
 
-<p>Another interesting way to investigate slow downs in nvim that I found is <a href="https://github.com/stevearc/profile.nvim" rel="external nofollow noopener" target="_blank">this</a> amazing profiling plugin. In case <code class="language-plaintext highlighter-rouge">--startuptime</code> doesn’t give enough or any actionable information.</p>
+<p>Another interesting way to investigate slowdowns in nvim is <a href="https://github.com/stevearc/profile.nvim" rel="external nofollow noopener" target="_blank">this</a> excellent profiling plugin. It is useful when <code class="language-plaintext highlighter-rouge">--startuptime</code> does not give enough actionable information.</p>
 
-<p>For example, this is what it showed for my problem. I added a small <a href="https://github.com/fedemengo/nvim/blob/5edbcf57707a5a987275dad8f1e78f3b13efddc4/fnl/mods/dev/profile.fnl" rel="external nofollow noopener" target="_blank">wrapper</a> to my config and followed the intruction on the repo on how to generate a profile of the startup. And finally inspected the profile with <a href="https://github.com/google/perfetto" rel="external nofollow noopener" target="_blank">perfetto</a>.</p>
+<p>For example, this is what it showed for my problem. I added a small <a href="https://github.com/fedemengo/nvim/blob/5edbcf57707a5a987275dad8f1e78f3b13efddc4/fnl/mods/dev/profile.fnl" rel="external nofollow noopener" target="_blank">wrapper</a> to my config, followed the repository instructions to generate a startup profile, and inspected the result with <a href="https://github.com/google/perfetto" rel="external nofollow noopener" target="_blank">Perfetto</a>.</p>
 
 <figure>
 
@@ -410,6 +448,12 @@ sys     0m0.000s
   
 
   <li class="my-2">
+    <a class="text-pink-700 underline font-semibold hover:text-pink-800" href="/blog/2025/10/money-laundrying/">Money Laundrying</a>
+  </li>
+
+  
+
+  <li class="my-2">
     <a class="text-pink-700 underline font-semibold hover:text-pink-800" href="/blog/2022/10/visualizing-cellular-automata/">Visualizing cellular automata</a>
   </li>
 
@@ -429,12 +473,6 @@ sys     0m0.000s
 
   <li class="my-2">
     <a class="text-pink-700 underline font-semibold hover:text-pink-800" href="/blog/2020/11/ssh-local-forwarding/">SSH Local Forwarding</a>
-  </li>
-
-  
-
-  <li class="my-2">
-    <a class="text-pink-700 underline font-semibold hover:text-pink-800" href="/blog/2019/09/web-crawler/">Designing an efficient webcrawler</a>
   </li>
 
 </div>

