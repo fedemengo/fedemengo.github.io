@@ -675,6 +675,19 @@ code {
   padding: 3px 3px;
 }
 
+.language-pm3 .gp + .gi {
+  color: #009f06;
+  background-color: transparent;
+  font-weight: 700;
+}
+
+div[class*=language-ssdp] .ne,
+div[class*=language-ssdp] .gr {
+  color: #FF3636;
+  background-color: transparent;
+  font-weight: 700;
+}
+
 html.transition,
 html.transition *,
 html.transition *:before,
