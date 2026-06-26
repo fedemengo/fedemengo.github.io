@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.4.1">Jekyll</generator><link href="https://fedemengo.github.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://fedemengo.github.io/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-06-25T23:25:25+00:00</updated><id>https://fedemengo.github.io/feed.xml</id><title type="html">fedemengo</title><entry><title type="html">Money Laundrying</title><link href="https://fedemengo.github.io/blog/2025/10/money-laundrying/" rel="alternate" type="text/html" title="Money Laundrying" /><published>2025-10-12T00:00:00+00:00</published><updated>2025-10-12T00:00:00+00:00</updated><id>https://fedemengo.github.io/blog/2025/10/money-laundrying</id><content type="html" xml:base="https://fedemengo.github.io/blog/2025/10/money-laundrying/"><![CDATA[<h2 id="intro">Intro</h2>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.4.1">Jekyll</generator><link href="https://fedemengo.github.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://fedemengo.github.io/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-06-26T08:07:26+00:00</updated><id>https://fedemengo.github.io/feed.xml</id><title type="html">fedemengo</title><entry><title type="html">Money Laundrying</title><link href="https://fedemengo.github.io/blog/2025/10/money-laundrying/" rel="alternate" type="text/html" title="Money Laundrying" /><published>2025-10-12T00:00:00+00:00</published><updated>2025-10-12T00:00:00+00:00</updated><id>https://fedemengo.github.io/blog/2025/10/money-laundrying</id><content type="html" xml:base="https://fedemengo.github.io/blog/2025/10/money-laundrying/"><![CDATA[<h2 id="intro">Intro</h2>
 
 <p>It started with a stored-value card and a very simple question: if the official reader can update the balance, what is stopping me from talking to the same card and writing the same kind of bytes?</p>
 
@@ -29,7 +29,7 @@
 
 <h2 id="mifare-classic-layout">MIFARE Classic layout</h2>
 
-<p>Before looking at the dump, it helps to keep the MIFARE Classic memory layout in mind. The card is split into sectors, each sector is split into blocks, and every block is 16 bytes. The keys are not attached to a single block: they belong to a whole sector.</p>
+<p>Before looking at the dump, it helps to keep the MIFARE Classic memory layout in mind (for the full details, refer to the <a href="https://www.nxp.com/docs/en/data-sheet/MF1S50YYX_V1.pdf">NPX</a> specs). The card is split into sectors, each sector is split into blocks, and every block is 16 bytes. The keys are not attached to a single block: they belong to a whole sector.</p>
 
 <p>For the dump below, the useful mental model is the MIFARE Classic 1K-style layout:</p>
 
@@ -624,7 +624,65 @@ Diff blocks:
 
 <p>That was enough to confirm the basic layout: the visible balance is stored in blocks <code class="language-plaintext highlighter-rouge">8</code> and <code class="language-plaintext highlighter-rouge">9</code>, repeated as a little-endian value and as its inverted counterpart. The other changed block is still suspicious, but it was not needed to make this specific value update work.</p>
 
-<p>The fun part is how little magic there was once the dumps were side by side. Most of the work was not “breaking” anything, but getting the data into a shape where the pattern could be seen.</p>]]></content><author><name></name></author><summary type="html"><![CDATA[Intro]]></summary></entry><entry><title type="html">How I Made Neovim 300x Faster</title><link href="https://fedemengo.github.io/blog/2023/04/nvim-evil-regex/" rel="alternate" type="text/html" title="How I Made Neovim 300x Faster" /><published>2023-04-23T00:00:00+00:00</published><updated>2023-04-23T00:00:00+00:00</updated><id>https://fedemengo.github.io/blog/2023/04/nvim-evil-regex</id><content type="html" xml:base="https://fedemengo.github.io/blog/2023/04/nvim-evil-regex/"><![CDATA[<h2 id="intro">Intro</h2>
+<p>The fun part is how little magic there was once the dumps were side by side. Most of the work was not “breaking” anything, but getting the data into a shape where the pattern could be seen.</p>
+
+<p>Of course, most of this reverse engineering could have been avoided by reading section <code class="language-plaintext highlighter-rouge">8.6.2.1</code> of the NXP specs first. That section describes MIFARE Classic value blocks, which are explicitly meant for electronic purse functions: <code class="language-plaintext highlighter-rouge">read</code>, <code class="language-plaintext highlighter-rouge">write</code>, <code class="language-plaintext highlighter-rouge">increment</code>, <code class="language-plaintext highlighter-rouge">decrement</code>, <code class="language-plaintext highlighter-rouge">restore</code>, and <code class="language-plaintext highlighter-rouge">transfer</code>. In other words, the pattern that looked like a nice recovered structure was already documented in the datasheet.</p>
+
+<details>
+  <summary>Section 8.6.2.1: Value blocks</summary>
+
+  <p>In this excerpt I use <code class="language-plaintext highlighter-rouge">~value</code> and <code class="language-plaintext highlighter-rouge">~adr</code> for the bitwise-not copies stored in the block. The value itself is signed, so negative values are represented in standard two’s-complement form.</p>
+
+  <p>Value blocks allow performing electronic purse functions (valid commands are: read,
+write, increment, decrement, restore, transfer). Value blocks have a fixed data format
+which permits error detection and correction and a backup management.</p>
+
+  <p>A value block can only be generated through a write operation in value block format:</p>
+
+  <ul>
+    <li>
+      <p>Value: Signifies a signed 4-byte value. The lowest significant byte of a value is stored
+in the lowest address byte. Negative values are stored in standard 2’s complement
+format. For reasons of data integrity and security, a value is stored three times, twice
+non-inverted and once inverted.</p>
+    </li>
+    <li>
+      <p>Adr: Signifies a 1-byte address, which can be used to save the storage address of a
+block, when implementing a powerful backup management. The address byte is stored four
+times, twice inverted and non-inverted. During increment, decrement, restore and transfer
+operations the address remains unchanged. It can only be altered via a write command.</p>
+    </li>
+  </ul>
+
+  <p>Figure 8. Value blocks</p>
+
+  <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>+-------------+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
+| Byte Number | 0  | 1  | 2  | 3  | 4  | 5  | 6  | 7  | 8  | 9  | 10 | 11 | 12 | 13 | 14 | 15 |
++-------------+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
+| Description | value             | ~value            | value             |adr |~adr|adr |~adr|
++-------------+-------------------+-------------------+-------------------+----+----+----+----+
+</code></pre></div>  </div>
+
+  <p>An example of a valid value block format for the decimal value <code class="language-plaintext highlighter-rouge">1234567d</code> and the block
+address <code class="language-plaintext highlighter-rouge">17d</code> is shown in Table 4. First, the decimal value has to be converted to the
+hexadecimal representation of <code class="language-plaintext highlighter-rouge">0012D687h</code>. The LSByte of the hexadecimal value is stored
+in Byte 0, the MSByte in Byte 3. The <code class="language-plaintext highlighter-rouge">~value</code> hexadecimal representation is <code class="language-plaintext highlighter-rouge">FFED2978h</code>,
+where the LSByte is stored in Byte 4 and the MSByte in Byte 7.</p>
+
+  <p>The hexadecimal value of the address in the example is <code class="language-plaintext highlighter-rouge">11h</code>; <code class="language-plaintext highlighter-rouge">~adr</code> is <code class="language-plaintext highlighter-rouge">EEh</code>.</p>
+
+  <p>Table 4. Value block format example</p>
+
+  <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>+-------------+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
+| Byte Number | 0  | 1  | 2  | 3  | 4  | 5  | 6  | 7  | 8  | 9  | 10 | 11 | 12 | 13 | 14 | 15 |
++-------------+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
+| Description | value             | ~value            | value             |adr |~adr|adr |~adr|
++-------------+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
+| Values hex  | 87 | D6 | 12 | 00 | 78 | 29 | ED | FF | 87 | D6 | 12 | 00 | 11 | EE | 11 | EE |
++-------------+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
+</code></pre></div>  </div>
+
+</details>]]></content><author><name></name></author><summary type="html"><![CDATA[Intro]]></summary></entry><entry><title type="html">How I Made Neovim 300x Faster</title><link href="https://fedemengo.github.io/blog/2023/04/nvim-evil-regex/" rel="alternate" type="text/html" title="How I Made Neovim 300x Faster" /><published>2023-04-23T00:00:00+00:00</published><updated>2023-04-23T00:00:00+00:00</updated><id>https://fedemengo.github.io/blog/2023/04/nvim-evil-regex</id><content type="html" xml:base="https://fedemengo.github.io/blog/2023/04/nvim-evil-regex/"><![CDATA[<h2 id="intro">Intro</h2>
 
 <p>For a while, I have been working on a side <a href="https://github.com/fedemengo/d2bist">project</a> that generates files with long sequences of <code class="language-plaintext highlighter-rouge">0</code>s and <code class="language-plaintext highlighter-rouge">1</code>s. Nvim is my primary editor, so I often need to inspect or modify those files. To my great annoyance, whenever a file contained more than a few tens of thousands of bits, nvim would hang for several seconds, minutes, or until I finally SIGKILLed it.</p>
 
