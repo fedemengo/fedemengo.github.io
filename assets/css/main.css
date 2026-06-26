@@ -681,9 +681,32 @@ code {
   font-weight: 700;
 }
 
-div[class*=language-ssdp] .ne,
 div[class*=language-ssdp] .gr {
-  color: #FF3636;
+  color: #B71C1C;
+  background-color: transparent;
+  font-weight: 700;
+}
+
+div[class*=language-ssdp] .gs {
+  color: rgb(177.8, 151.7623430962, 0);
+  background-color: transparent;
+  font-weight: 700;
+}
+
+div[class*=language-ssdp] .go {
+  color: #2698BA;
+  background-color: transparent;
+  font-weight: 700;
+}
+
+div[class*=language-ssdp] .gd {
+  color: #f92080;
+  background-color: transparent;
+  font-weight: 700;
+}
+
+div[class*=language-ssdp] .ne {
+  color: #2698BA;
   background-color: transparent;
   font-weight: 700;
 }
