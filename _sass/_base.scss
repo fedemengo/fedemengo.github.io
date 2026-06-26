@@ -735,6 +735,47 @@ code {
   padding: 3px 3px;
 }
 
+.language-pm3 .gp + .gi {
+  color: $green-color-dark;
+  background-color: transparent;
+  font-weight: 700;
+}
+
+// changed bytes [84] → dark bordeaux red
+div[class*="language-ssdp"] .gr {
+  color: $red-color-dark;
+  background-color: transparent;
+  font-weight: 700;
+}
+
+// [BLOCK] ID=... lines → dark yellow
+div[class*="language-ssdp"] .gs {
+  color: darken($yellow-color, 12%);
+  background-color: transparent;
+  font-weight: 700;
+}
+
+// data01 highlighted fields → cyan
+div[class*="language-ssdp"] .go {
+  color: #00BCD4;
+  background-color: transparent;
+  font-weight: 700;
+}
+
+// data02 highlighted fields → magenta
+div[class*="language-ssdp"] .gd {
+  color: $pink-color;
+  background-color: transparent;
+  font-weight: 700;
+}
+
+// fallback (no data context) → cyan
+div[class*="language-ssdp"] .ne {
+  color: #00BCD4;
+  background-color: transparent;
+  font-weight: 700;
+}
+
 
 // Transitioning Themes
 html.transition,

