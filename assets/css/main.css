@@ -84,7 +84,7 @@ body.sticky-bottom-footer {
 }
 
 .container {
-  max-width: 800px;
+  max-width: 960px;
 }
 
 .profile img {
@@ -694,7 +694,7 @@ div[class*=language-ssdp] .gs {
 }
 
 div[class*=language-ssdp] .go {
-  color: #2698BA;
+  color: #00BCD4;
   background-color: transparent;
   font-weight: 700;
 }
@@ -706,7 +706,7 @@ div[class*=language-ssdp] .gd {
 }
 
 div[class*=language-ssdp] .ne {
-  color: #2698BA;
+  color: #00BCD4;
   background-color: transparent;
   font-weight: 700;
 }
