@@ -1,26 +1,32 @@
 // Has to be in the head tag, otherwise a flicker effect will occur.
 
-let toggleTheme = (theme) => {
-  if (theme == "dark") {
-    setTheme("light");
+let toggleThemeSetting = () => {
+  let themeSetting = determineThemeSetting();
+  if (themeSetting == "system") {
+    setThemeSetting("light");
+  } else if (themeSetting == "light") {
+    setThemeSetting("dark");
   } else {
-    setTheme("dark");
+    setThemeSetting("system");
   }
 }
 
 
-let setTheme = (theme) =>  {
+let setThemeSetting = (themeSetting) => {
+  localStorage.setItem("theme", themeSetting);
+  document.documentElement.setAttribute("data-theme-setting", themeSetting);
+  applyTheme();
+}
+
+
+let applyTheme = () =>  {
+  let theme = determineComputedTheme();
+
   transTheme();
   setHighlight(theme);
   setGiscusTheme(theme);
 
-  if (theme) {
-    document.documentElement.setAttribute("data-theme", theme);
-  }
-  else {
-    document.documentElement.removeAttribute("data-theme");
-  }
-  localStorage.setItem("theme", theme);
+  document.documentElement.setAttribute("data-theme", theme);
 
   // Updates the background of medium-zoom overlay.
   if (typeof medium_zoom !== 'undefined') {
@@ -30,6 +36,15 @@ let setTheme = (theme) =>  {
     })
   }
 };
+
+
+let setTheme = (theme) => {
+  if (theme == "dark" || theme == "light" || theme == "system") {
+    setThemeSetting(theme);
+  } else {
+    setThemeSetting("system");
+  }
+}
 
 
 let setHighlight = (theme) => {
@@ -68,16 +83,38 @@ let transTheme = () => {
 }
 
 
-let initTheme = (theme) => {
-  if (theme == null || theme == 'null') {
-    const userPref = window.matchMedia;
-    if (userPref && userPref('(prefers-color-scheme: dark)').matches) {
-        theme = 'dark';
-    }
+let determineThemeSetting = () => {
+  let themeSetting = localStorage.getItem("theme");
+  if (themeSetting != "dark" && themeSetting != "light" && themeSetting != "system") {
+    themeSetting = "system";
   }
-
-  setTheme(theme);
+  return themeSetting;
 }
 
 
-initTheme(localStorage.getItem("theme"));
+let determineComputedTheme = () => {
+  let themeSetting = determineThemeSetting();
+  if (themeSetting == "system") {
+    const userPref = window.matchMedia;
+    if (userPref && userPref('(prefers-color-scheme: dark)').matches) {
+      return "dark";
+    }
+    return "light";
+  }
+  return themeSetting;
+}
+
+
+let initTheme = () => {
+  setThemeSetting(determineThemeSetting());
+
+  const userPref = window.matchMedia;
+  if (userPref) {
+    userPref('(prefers-color-scheme: dark)').addEventListener("change", () => {
+      applyTheme();
+    });
+  }
+}
+
+
+initTheme();

@@ -19,11 +19,14 @@
   --global-divider-color: rgba(0,0,0,.1);
   --global-card-bg-color: #ffffff;
 }
-:root .fa-sun {
+:root #light-toggle-system {
+  display: inline-block;
+}
+:root #light-toggle-dark {
   display: none;
 }
-:root .fa-moon {
-  display: inline-block;
+:root #light-toggle-light {
+  display: none;
 }
 :root .repo-img-light {
   display: block;
@@ -46,17 +49,31 @@ html[data-theme=dark] {
   --global-divider-color: #424246;
   --global-card-bg-color: #212529;
 }
-html[data-theme=dark] .fa-sun {
-  display: inline-block;
-}
-html[data-theme=dark] .fa-moon {
-  display: none;
-}
 html[data-theme=dark] .repo-img-light {
   display: none;
 }
 html[data-theme=dark] .repo-img-dark {
   display: block;
+}
+
+html[data-theme-setting=dark] #light-toggle-system {
+  display: none;
+}
+html[data-theme-setting=dark] #light-toggle-dark {
+  display: inline-block;
+}
+html[data-theme-setting=dark] #light-toggle-light {
+  display: none;
+}
+
+html[data-theme-setting=light] #light-toggle-system {
+  display: none;
+}
+html[data-theme-setting=light] #light-toggle-dark {
+  display: none;
+}
+html[data-theme-setting=light] #light-toggle-light {
+  display: inline-block;
 }
 
 /******************************************************************************
