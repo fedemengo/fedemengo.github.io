@@ -738,6 +738,12 @@ div[class*=language-ssdp] .gs {
   font-weight: 700;
 }
 
+div[class*=language-ssdp] .nb {
+  color: #0000FF;
+  background-color: transparent;
+  font-weight: 700;
+}
+
 div[class*=language-ssdp] .go {
   color: #00BCD4;
   background-color: transparent;
