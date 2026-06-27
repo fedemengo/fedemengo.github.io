@@ -90,8 +90,9 @@
               <li class="toggle-container">
                 {%- if site.enable_darkmode %}
                 <button id="light-toggle" title="Change theme">
-                  <i class="fas fa-moon"></i>
-                  <i class="fas fa-sun"></i>
+                  <i class="fas fa-adjust" id="light-toggle-system"></i>
+                  <i class="fas fa-moon" id="light-toggle-dark"></i>
+                  <i class="fas fa-sun" id="light-toggle-light"></i>
                 </button>
                 {%- endif %}
                 <button id="width-toggle" title="Use narrow content width" aria-label="Toggle content width" aria-pressed="false">
