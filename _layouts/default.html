@@ -11,12 +11,13 @@
 
   <!-- Body -->
   <body class="{% if site.navbar_fixed %}fixed-top-nav{% endif %} {% unless site.footer_fixed %}sticky-bottom-footer{% endunless %}">
+    {%- assign content_max_width = page.max_width | default: site.max_width -%}
 
     <!-- Header -->
     {%- include header.html %}
 
     <!-- Content -->
-    <div class="container mt-5">
+    <div class="container mt-5" style="max-width: var(--reader-content-width, {{ content_max_width }});">
       {{ content }}
     </div>
 

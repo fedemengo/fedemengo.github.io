@@ -1,4 +1,5 @@
-<div id="giscus_thread" style="max-width: {{ site.max_width }}; margin: 0 auto;">
+{%- assign content_max_width = page.max_width | default: site.max_width -%}
+<div id="giscus_thread" style="max-width: var(--reader-content-width, {{ content_max_width }}); margin: 0 auto;">
   <script>
     let giscusTheme = localStorage.getItem("theme");
     let giscusAttributes = {

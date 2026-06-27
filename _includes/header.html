@@ -43,18 +43,10 @@
                 {% endif %}
               {% endfor %}
 
-              <!-- About -->
-              <li class="nav-item {% if page.permalink == '/' %}active{% endif %}">
-                <a class="nav-link" href="{{ '/' | relative_url }}">{{ about_title }}
-                  {%- if page.permalink == '/' -%}
-                  <span class="sr-only">(current)</span>
-                  {%- endif -%}
-                </a>
-              </li>
               {% if site.blog_nav_title %}
-              <!-- Blog -->
+              <!-- Posts -->
               <li class="nav-item {% if page.url contains 'blog' %}active{% endif %}">
-                <a class="nav-link" href="{{ '/blog/' | relative_url }}">{{ site.blog_nav_title }}
+                <a class="nav-link" href="{{ '/blog/' | relative_url }}">posts
                   {%- if page.url contains 'blog' -%}
                   <span class="sr-only">(current)</span>
                   {%- endif -%}
@@ -94,16 +86,20 @@
               {%- endif -%}
               {%- endif -%}
               {% endfor -%}
-              {%- if site.enable_darkmode %}
-
-              <!-- Toogle theme mode -->
+              <!-- Reader display controls -->
               <li class="toggle-container">
+                {%- if site.enable_darkmode %}
                 <button id="light-toggle" title="Change theme">
                   <i class="fas fa-moon"></i>
                   <i class="fas fa-sun"></i>
                 </button>
+                {%- endif %}
+                <button id="width-toggle" title="Use narrow content width" aria-label="Toggle content width" aria-pressed="false">
+                  <i class="fas fa-compress-alt width-narrow-icon"></i>
+                  <i class="fas fa-expand-alt width-wide-icon"></i>
+                  <i class="fas fa-expand-arrows-alt width-expanded-icon"></i>
+                </button>
               </li>
-              {%- endif %}
             </ul>
           </div>
         </div>
