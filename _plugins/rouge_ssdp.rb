@@ -48,7 +48,7 @@ module Rouge
         rule %r/^\[BLOCK\].*$/, Generic::Strong
         rule %r/\[BLOCK\]/, Generic::Strong
         rule %r/^\s+\[MIFARE VALUE\].*$/, Generic::Inserted
-        rule %r/^\s+\[units=\d+\]/, Generic::Subheading
+        rule %r/\[units=\d+\]/, Name::Builtin
 
         rule %r/^\s+!?\+\d+/, Name::Label
         rule %r/\[[[:xdigit:]]{2}(?:\s+[[:xdigit:]]{2})*\]/ do |m|
