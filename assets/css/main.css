@@ -23,9 +23,7 @@
   display: none;
 }
 :root .fa-moon {
-  padding-left: 10px;
-  padding-top: 12px;
-  display: block;
+  display: inline-block;
 }
 :root .repo-img-light {
   display: block;
@@ -49,9 +47,7 @@ html[data-theme=dark] {
   --global-card-bg-color: #212529;
 }
 html[data-theme=dark] .fa-sun {
-  padding-left: 10px;
-  padding-top: 12px;
-  display: block;
+  display: inline-block;
 }
 html[data-theme=dark] .fa-moon {
   display: none;
@@ -329,14 +325,63 @@ blockquote {
   transform: rotate(0);
 }
 
-#light-toggle {
+#light-toggle,
+#width-toggle {
   padding: 0;
   border: 0;
   background-color: inherit;
   color: var(--global-text-color);
+  width: 1rem;
+  height: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: inherit;
 }
-#light-toggle:hover {
+#light-toggle:hover,
+#width-toggle:hover {
   color: var(--global-hover-color);
+}
+
+#light-toggle .fa-moon,
+#light-toggle .fa-sun {
+  padding: 0;
+}
+
+.toggle-container {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-left: 1.15rem;
+}
+
+#width-toggle .width-wide-icon {
+  display: inline-block;
+}
+#width-toggle .width-narrow-icon,
+#width-toggle .width-expanded-icon {
+  display: none;
+}
+
+html[data-content-width=narrow] #width-toggle .width-wide-icon {
+  display: inline-block;
+}
+
+html[data-content-width=wide] #width-toggle .width-wide-icon {
+  display: none;
+}
+html[data-content-width=wide] #width-toggle .width-expanded-icon {
+  display: inline-block;
+}
+
+html[data-content-width=expanded] #width-toggle .width-wide-icon {
+  display: none;
+}
+html[data-content-width=expanded] #width-toggle .width-narrow-icon {
+  display: inline-block;
+}
+html[data-content-width=expanded] #width-toggle .width-expanded-icon {
+  display: none;
 }
 
 .social {

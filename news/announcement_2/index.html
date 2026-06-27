@@ -32,6 +32,7 @@
     
     <link rel="shortcut icon" href="/assets/img/code.png">
     
+    <script src="/assets/js/content_width.js"></script>
     <link rel="stylesheet" href="/assets/css/main.css">
     <link rel="canonical" href="https://fedemengo.github.io/news/announcement_2/">
 
@@ -54,8 +55,7 @@
 
   <!-- Body -->
   <body class="fixed-top-nav sticky-bottom-footer">
-
-    <!-- Header -->
+<!-- Header -->
     <header>
 
       <!-- Nav Bar -->
@@ -73,26 +73,26 @@
           <div class="collapse navbar-collapse text-right" id="navbarNav">
             <ul class="navbar-nav ml-auto flex-nowrap">
 
-              <!-- About -->
-              <li class="nav-item ">
-                <a class="nav-link" href="/">about</a>
-              </li>
               
-              <!-- Blog -->
+              <!-- Posts -->
               <li class="nav-item ">
-                <a class="nav-link" href="/blog/">blog</a>
+                <a class="nav-link" href="/blog/">posts</a>
               </li>
 
               <!-- Other pages -->
               <li class="nav-item ">
                 <a class="nav-link" href="/links/">links</a>
               </li>
-
-              <!-- Toogle theme mode -->
+<!-- Reader display controls -->
               <li class="toggle-container">
                 <button id="light-toggle" title="Change theme">
                   <i class="fas fa-moon"></i>
                   <i class="fas fa-sun"></i>
+                </button>
+                <button id="width-toggle" title="Use narrow content width" aria-label="Toggle content width" aria-pressed="false">
+                  <i class="fas fa-compress-alt width-narrow-icon"></i>
+                  <i class="fas fa-expand-alt width-wide-icon"></i>
+                  <i class="fas fa-cube width-expanded-icon"></i>
                 </button>
               </li>
             </ul>
@@ -110,7 +110,7 @@
 
 
     <!-- Content -->
-    <div class="container mt-5">
+    <div class="container mt-5" style="max-width: var(--reader-content-width, 960px);">
       <!-- _layouts/post.html -->
 
 <div class="post">
