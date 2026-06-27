@@ -22,9 +22,13 @@ module Rouge
         rule %r/^\[=\]/, Generic::Subheading
         rule %r/`[^`]+`/, Str
         rule %r/\S*[~\/.]\S*/, Text
-        rule %r/\b[0-9A-Fa-f]{13,}\b/, Text
+        rule %r/\b[0-9A-Fa-f]{64}\b/, Num::Hex
+        rule %r/\b[0-9A-Fa-f]{32}\b/, Num::Hex
         rule %r/\b[0-9A-Fa-f]{12}\b/, Num::Hex
-        rule %r/\b[0-9A-Fa-f]{2}(?: [0-9A-Fa-f]{2})+\b/, Num::Hex
+        rule %r/([^[:alnum:]])([0-9A-Fa-f]{2}(?: [0-9A-Fa-f]{2})+)(?![[:alnum:]])/ do |m|
+          token Text, m[1]
+          token Num::Hex, m[2]
+        end
         rule %r/\s+/, Text::Whitespace
         rule %r/./, Text
       end
@@ -39,9 +43,13 @@ module Rouge
         rule %r/(\s+)(hf|mf|rdbl|wrbl|dump|info|search|autopwn)(?=\s|$)/ do
           groups Text::Whitespace, Keyword
         end
-        rule %r/\b[0-9A-Fa-f]{13,}\b/, Text
+        rule %r/\b[0-9A-Fa-f]{64}\b/, Num::Hex
+        rule %r/\b[0-9A-Fa-f]{32}\b/, Num::Hex
         rule %r/\b[0-9A-Fa-f]{12}\b/, Num::Hex
-        rule %r/\b[0-9A-Fa-f]{2}(?: [0-9A-Fa-f]{2})+\b/, Num::Hex
+        rule %r/([^[:alnum:]])([0-9A-Fa-f]{2}(?: [0-9A-Fa-f]{2})+)(?![[:alnum:]])/ do |m|
+          token Text, m[1]
+          token Num::Hex, m[2]
+        end
         rule %r/\s+/, Text::Whitespace
         rule %r/./, Text
       end

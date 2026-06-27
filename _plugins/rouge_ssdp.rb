@@ -14,11 +14,17 @@ module Rouge
         RAW INT_LE INT_BE NOT_LE NOT_BE BIN BIN_NOT NOT_RAW
       ].freeze
 
-      # Token per data-file index: data01 → go (cyan), data02 → gd (magenta), 0 → ne (default)
-      DATA_TOKENS = [
-        Name::Exception,  # 0 - no data context
-        Generic::Output,  # 1 - data01
-        Generic::Deleted, # 2 - data02
+      DEFAULT_DATA_TOKEN = Name::Exception
+
+      # Rouge only emits known token classes. Use these as implementation
+      # slots for dataNN colors; the Sass layer assigns the actual colors.
+      DATA_COLOR_TOKENS = [
+        Generic::Output,
+        Generic::Deleted,
+        Name::Function,
+        Name::Constant,
+        Name::Decorator,
+        Name::Tag,
       ].freeze
 
       option :fields, "comma-separated fields to color, e.g. RAW,INT_LE,NOT_RAW"
@@ -40,34 +46,46 @@ module Rouge
         super(code, *args, &b)
       end
 
+      def data_token(index)
+        index = index.to_i
+        return DEFAULT_DATA_TOKEN if index <= 0
+
+        DATA_COLOR_TOKENS[(index - 1) % DATA_COLOR_TOKENS.length]
+      end
+
+      def highlighted_data_token
+        @data_idx.positive? ? data_token(@data_idx) : Generic::Error
+      end
+
       state :root do
         rule %r/^>\s+ssdp\b.*$/, Generic::Prompt
         rule %r/^Inputs:|^Diff blocks:|^File:|^Size:|^Range:/, Generic::Heading
         rule %r/^MIFARE:.*$/, Generic::Subheading
 
-        rule %r/^\[BLOCK\].*$/, Generic::Strong
-        rule %r/\[BLOCK\]/, Generic::Strong
+        rule %r/(\n)([ \t]*\[BLOCK\].*)/ do
+          groups Text::Whitespace, Generic::Strong
+        end
+        rule %r/^[ \t]*\[BLOCK\].*$/, Generic::Strong
+        rule %r/\[BLOCK\].*$/, Generic::Strong
         rule %r/^\s+\[MIFARE VALUE\].*$/, Generic::Inserted
-        rule %r/\[units=\d+\]/, Name::Builtin
+        rule %r/\[chunk-size=\d+\]/, Name::Builtin
 
         rule %r/^\s+!?\+\d+/, Name::Label
-        rule %r/\[[[:xdigit:]]{2}(?:\s+[[:xdigit:]]{2})*\]/ do |m|
-          tok = @data_idx > 0 ? (DATA_TOKENS[@data_idx] || Generic::Error) : Generic::Error
-          token tok, m[0]
-        end
-        rule %r/\S*[~\/.]\S*/, Text
-
-        rule %r/\b(data(\d*)):([ \t]*)([~\/]\S+)?/ do |m|
+        rule %r/\b(data(\d*)):([ \t]*)([^\s|=]*[~\/.][^\s|=]*)?/ do |m|
           @data_idx = m[2].empty? ? 0 : m[2].to_i
-          tok = DATA_TOKENS[@data_idx] || DATA_TOKENS[0]
-          token Name::Variable, "#{m[1]}:"
+          tok = data_token(@data_idx)
+          token Text, "#{m[1]}:"
           token Text::Whitespace, m[3] unless m[3].to_s.empty?
           token tok, m[4] unless m[4].to_s.empty?
         end
+        rule %r/\[[[:xdigit:]]{2}(?:\s+[[:xdigit:]]{2})*\]/ do |m|
+          token highlighted_data_token, m[0]
+        end
+        rule %r/\S*[~\/.]\S*/, Text
 
         rule %r/\b(RAW|INT_LE|INT_BE|NOT_LE|NOT_BE|BIN|BIN_NOT|NOT_RAW)(=)(\s*)([^|\n]*[^\s|\n])?/ do |m|
           if @fields.include?(m[1])
-            tok = DATA_TOKENS[@data_idx] || DATA_TOKENS[0]
+            tok = data_token(@data_idx)
             token tok, m[1]
             token tok, m[2]
             token Text::Whitespace, m[3] unless m[3].empty?

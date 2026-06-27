@@ -778,11 +778,13 @@ footer.sticky-bottom {
 
 // Rouge Color Customization
 figure.highlight {
+  color: var(--global-code-text-color);
+  background-color: var(--global-code-bg-color);
   margin: 0 0 1rem;
 }
 
 pre {
-  color: var(--global-theme-color);
+  color: var(--global-code-text-color);
   background-color: var(--global-code-bg-color);
   border-radius: 6px;
   padding: 6px 12px;
@@ -797,54 +799,67 @@ pre {
 }
 
 code {
-  color: var(--global-theme-color);
+  color: var(--global-code-text-color);
   background-color: var(--global-code-bg-color);
   border-radius: 3px;
   padding: 3px 3px;
 }
 
+// Rouge/Pygments token classes used below:
+// gp = Generic::Prompt, gi = Generic::Inserted, nv = Name::Variable,
+// mh = Num::Hex, nb = Name::Builtin, gr = Generic::Error,
+// gs = Generic::Strong, ne = Name::Exception.
 .language-pm3 .gp + .gi {
   color: $green-color-dark;
   background-color: transparent;
   font-weight: 700;
 }
 
-// changed bytes [84] → dark bordeaux red
+// Keep neutral ssdp tokens plain so only selected diff fields stand out.
+div[class*="language-ssdp"] .nv,
+div[class*="language-ssdp"] .mh {
+  color: var(--global-code-text-color);
+  background-color: transparent;
+  font-weight: 400;
+}
+
 div[class*="language-ssdp"] .gr {
   color: $red-color-dark;
   background-color: transparent;
   font-weight: 700;
 }
 
-// [BLOCK] ID=... lines → dark yellow
 div[class*="language-ssdp"] .gs {
   color: darken($yellow-color, 12%);
   background-color: transparent;
   font-weight: 700;
 }
 
-// [units=...] lines → blue
 div[class*="language-ssdp"] .nb {
   color: #0000FF;
   background-color: transparent;
   font-weight: 700;
 }
 
-// data01 highlighted fields → cyan
-div[class*="language-ssdp"] .go {
-  color: #00BCD4;
-  background-color: transparent;
-  font-weight: 700;
+// The ssdp lexer maps dataNN inputs onto these Rouge token slots in order.
+// Keep the palette here so adding/changing dump colors is one edit.
+$ssdp-data-color-slots: (
+  "go": #00BCD4,
+  "gd": $pink-color,
+  "nf": $green-color-dark,
+  "no": $orange-color,
+  "nd": $purple-color,
+  "nt": $red-color-dark
+);
+
+@each $token-class, $color in $ssdp-data-color-slots {
+  div[class*="language-ssdp"] .#{$token-class} {
+    color: $color;
+    background-color: transparent;
+    font-weight: 700;
+  }
 }
 
-// data02 highlighted fields → magenta
-div[class*="language-ssdp"] .gd {
-  color: $pink-color;
-  background-color: transparent;
-  font-weight: 700;
-}
-
-// fallback (no data context) → cyan
 div[class*="language-ssdp"] .ne {
   color: #00BCD4;
   background-color: transparent;
@@ -863,16 +878,34 @@ html.transition *:after {
 
 // Extra Markdown style (post Customization)
 .post {
-  .post-meta {
-    color: var(--global-text-color-light);
-    font-size: 0.875rem;
+  > .post-header .post-heading {
+    align-items: baseline;
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+  }
+
+  > .post-header .post-title {
     margin-bottom: 0;
   }
 
-  .post-tags {
+  > .post-header .post-meta {
     color: var(--global-text-color-light);
     font-size: 0.875rem;
-    padding-top: 0.25rem;
+    flex: 0 0 auto;
+    margin-bottom: 0;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  > .post-header .post-tags {
+    align-items: center;
+    color: var(--global-text-color-light);
+    display: flex;
+    flex-wrap: wrap;
+    font-size: 0.875rem;
+    gap: 0.25rem 0.75rem;
+    padding-top: 0.5rem;
     padding-bottom: 1rem;
 
     a {
@@ -883,12 +916,29 @@ html.transition *:after {
         color: var(--global-theme-color);
       }
     }
+
+    .post-meta-separator {
+      color: var(--global-text-color-light);
+    }
   }
 
   .post-content {
     blockquote {
       border-left: 5px solid var(--global-theme-color);
       padding: 8px;
+    }
+  }
+
+  @media (max-width: 576px) {
+    > .post-header .post-heading {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    > .post-header .post-meta {
+      text-align: left;
+      white-space: normal;
     }
   }
 }
