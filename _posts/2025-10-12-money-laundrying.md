@@ -321,7 +321,7 @@ Diff blocks:
   [BLOCK] abs=09 (0x09)
 
 [BLOCK] abs=06 (0x06)
-  [units=2]
+  [chunk-size=2]
     data01: FULL=[92 B3] | [D9 34] | 00 00 | 00 00 | 00 00 | 00 00 | [FB 01] | [00 16]
     data02: FULL=[C5 59] | [C6 34] | 00 00 | 00 00 | 00 00 | 00 00 | [F9 01] | [00 04]
     !+00
@@ -337,7 +337,7 @@ Diff blocks:
       data01: RAW=00 16 | INT_LE=      5632 | INT_BE=        22 | NOT_LE=     59903 | NOT_BE=     65513
       data02: RAW=00 04 | INT_LE=      1024 | INT_BE=         4 | NOT_LE=     64511 | NOT_BE=     65531
 
-  [units=4]
+  [chunk-size=4]
     data01: FULL=[92 B3 D9 34] | 00 00 00 00 | 00 00 00 00 | [FB 01 00 16]
     data02: FULL=[C5 59 C6 34] | 00 00 00 00 | 00 00 00 00 | [F9 01 00 04]
     !+00
@@ -347,7 +347,7 @@ Diff blocks:
       data01: RAW=FB 01 00 16 | INT_LE= 369099259 | INT_BE=4211146774 | NOT_LE=3925868036 | NOT_BE=  83820521
       data02: RAW=F9 01 00 04 | INT_LE=  67109369 | INT_BE=4177592324 | NOT_LE=4227857926 | NOT_BE= 117374971
 
-  [units=8]
+  [chunk-size=8]
     data01: FULL=[92 B3 D9 34 00 00 00 00] | [00 00 00 00 FB 01 00 16]
     data02: FULL=[C5 59 C6 34 00 00 00 00] | [00 00 00 00 F9 01 00 04]
     !+00
@@ -358,7 +358,7 @@ Diff blocks:
       data02: RAW=00 00 00 00 F9 01 00 04 | INT_LE=288232545110196224 | INT_BE=4177592324 | NOT_LE=18158511528599355391 | NOT_BE=18446744069531959291
 
 [BLOCK] abs=08 (0x08)
-  [units=2]
+  [chunk-size=2]
     data01: FULL=[84 03] | 00 00 | [7B FC] | FF FF | [84 03] | 00 00 | 09 F6 | 09 F6
     data02: FULL=[E2 04] | 00 00 | [1D FB] | FF FF | [E2 04] | 00 00 | 09 F6 | 09 F6
     !+00
@@ -371,7 +371,7 @@ Diff blocks:
       data01: RAW=84 03 | INT_LE=       900 | INT_BE=     33795 | NOT_LE=     64635 | NOT_BE=     31740
       data02: RAW=E2 04 | INT_LE=      1250 | INT_BE=     57860 | NOT_LE=     64285 | NOT_BE=      7675
 
-  [units=4]
+  [chunk-size=4]
     data01: FULL=[84 03 00 00] | [7B FC FF FF] | [84 03 00 00] | 09 F6 09 F6
     data02: FULL=[E2 04 00 00] | [1D FB FF FF] | [E2 04 00 00] | 09 F6 09 F6
     !+00
@@ -384,7 +384,7 @@ Diff blocks:
       data01: RAW=84 03 00 00 | INT_LE=       900 | INT_BE=2214789120 | NOT_LE=4294966395 | NOT_BE=2080178175
       data02: RAW=E2 04 00 00 | INT_LE=      1250 | INT_BE=3791912960 | NOT_LE=4294966045 | NOT_BE= 503054335
 
-  [units=8]
+  [chunk-size=8]
     data01: FULL=[84 03 00 00 7B FC FF FF] | [84 03 00 00 09 F6 09 F6]
     data02: FULL=[E2 04 00 00 1D FB FF FF] | [E2 04 00 00 09 F6 09 F6]
     !+00
@@ -395,7 +395,7 @@ Diff blocks:
       data02: RAW=E2 04 00 00 09 F6 09 F6 | INT_LE=17728971926635807970 | INT_BE=16286142152645675510 | NOT_LE=717772147073743645 | NOT_BE=2160601921063876105
 
 [BLOCK] abs=09 (0x09)
-  [units=2]
+  [chunk-size=2]
     data01: FULL=[84 03] | 00 00 | [7B FC] | FF FF | [84 03] | 00 00 | 09 F6 | 09 F6
     data02: FULL=[E2 04] | 00 00 | [1D FB] | FF FF | [E2 04] | 00 00 | 09 F6 | 09 F6
     !+00
@@ -408,7 +408,7 @@ Diff blocks:
       data01: RAW=84 03 | INT_LE=       900 | INT_BE=     33795 | NOT_LE=     64635 | NOT_BE=     31740
       data02: RAW=E2 04 | INT_LE=      1250 | INT_BE=     57860 | NOT_LE=     64285 | NOT_BE=      7675
 
-  [units=4]
+  [chunk-size=4]
     data01: FULL=[84 03 00 00] | [7B FC FF FF] | [84 03 00 00] | 09 F6 09 F6
     data02: FULL=[E2 04 00 00] | [1D FB FF FF] | [E2 04 00 00] | 09 F6 09 F6
     !+00
@@ -421,7 +421,7 @@ Diff blocks:
       data01: RAW=84 03 00 00 | INT_LE=       900 | INT_BE=2214789120 | NOT_LE=4294966395 | NOT_BE=2080178175
       data02: RAW=E2 04 00 00 | INT_LE=      1250 | INT_BE=3791912960 | NOT_LE=4294966045 | NOT_BE= 503054335
 
-  [units=8]
+  [chunk-size=8]
     data01: FULL=[84 03 00 00 7B FC FF FF] | [84 03 00 00 09 F6 09 F6]
     data02: FULL=[E2 04 00 00 1D FB FF FF] | [E2 04 00 00 09 F6 09 F6]
     !+00
@@ -544,7 +544,7 @@ After writing, I dumped the card again and compared the modified dump against th
 
 ```ssdp
 #!fields=INT_LE,NOT_LE
-> ssdp diff --units 4 hf-mf-6C2FAC83-dump-0900.bin hf-mf-6C2FAC83-dump-xxxx.bin --show RAW,INT_LE,NOT_LE,INT_BE,NOT_BE | cat
+> ssdp diff --chunk-size 4 hf-mf-6C2FAC83-dump-0900.bin hf-mf-6C2FAC83-dump-xxxx.bin --show RAW,INT_LE,NOT_LE,INT_BE,NOT_BE | cat
 Inputs:
   data01: hf-mf-6C2FAC83-dump-0900.bin
   data02: hf-mf-6C2FAC83-dump-xxxx.bin
@@ -554,7 +554,7 @@ Diff blocks:
   [BLOCK] abs=09 (0x09)
 
 [BLOCK] abs=08 (0x08)
-  [units=4]
+  [chunk-size=4]
     data01: FULL=[84 03 00 00] | [7B FC FF FF] | [84 03 00 00] | 09 F6 09 F6
     data02: FULL=[B0 0B 00 00] | [4F F4 FF FF] | [B0 0B 00 00] | 09 F6 09 F6
     !+00
@@ -568,7 +568,7 @@ Diff blocks:
       data02: RAW=B0 0B 00 00 | INT_LE=      2992 | INT_BE=2953510912 | NOT_LE=4294964303 | NOT_BE=1341456383
 
 [BLOCK] abs=09 (0x09)
-  [units=4]
+  [chunk-size=4]
     data01: FULL=[84 03 00 00] | [7B FC FF FF] | [84 03 00 00] | 09 F6 09 F6
     data02: FULL=[B0 0B 00 00] | [4F F4 FF FF] | [B0 0B 00 00] | 09 F6 09 F6
     !+00
