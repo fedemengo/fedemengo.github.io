@@ -123,8 +123,8 @@
 
         <article>
           <div class="profile float-right">
-
-              <figure>
+<div class="profile-img-light">
+<figure>
 
   <picture>
     
@@ -139,7 +139,25 @@
   </picture>
 
 </figure>
+</div>
+                <div class="profile-img-dark">
+<figure>
 
+  <picture>
+    
+    <source class="responsive-img-srcset" media="(max-width: 480px)" srcset="/assets/img/glider-dark.gif-480.webp"></source>
+    <source class="responsive-img-srcset" media="(max-width: 800px)" srcset="/assets/img/glider-dark.gif-800.webp"></source>
+    <source class="responsive-img-srcset" media="(max-width: 1400px)" srcset="/assets/img/glider-dark.gif-1400.webp"></source>
+    
+
+    <!-- Fallback to the original file -->
+    <img src="/assets/img/glider-dark.gif" class="img-fluid z-depth-1 rounded" width="auto" height="auto" alt="glider-dark.gif" onerror="this.onerror=null; $('.responsive-img-srcset').remove();">
+
+  </picture>
+
+</figure>
+</div>
+            
           </div>
 
           <div class="clearfix mt-5">
