@@ -7,6 +7,7 @@ subtitle: bits, computers and everything in between
 profile:
   align: right
   image: glider.gif
+  image_dark: glider-dark.gif
   image_circular: false # crops the image to make it circular
   address: # >
     # <p>555 your office number</p>
