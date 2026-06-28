@@ -822,16 +822,16 @@ html.transition *:after {
   transition-delay: 0 !important;
 }
 
-.post .post-heading {
+.post > .post-header .post-heading {
   align-items: baseline;
   display: flex;
   gap: 1rem;
   justify-content: space-between;
 }
-.post .post-title {
+.post > .post-header .post-title {
   margin-bottom: 0;
 }
-.post .post-meta {
+.post > .post-header .post-meta {
   color: var(--global-text-color-light);
   font-size: 0.875rem;
   flex: 0 0 auto;
@@ -839,7 +839,7 @@ html.transition *:after {
   text-align: right;
   white-space: nowrap;
 }
-.post .post-tags {
+.post > .post-header .post-tags {
   align-items: center;
   color: var(--global-text-color-light);
   display: flex;
@@ -849,14 +849,14 @@ html.transition *:after {
   padding-top: 0.5rem;
   padding-bottom: 1rem;
 }
-.post .post-tags a {
+.post > .post-header .post-tags a {
   color: var(--global-text-color-light);
   text-decoration: none;
 }
-.post .post-tags a:hover {
+.post > .post-header .post-tags a:hover {
   color: var(--global-theme-color);
 }
-.post .post-tags .post-meta-separator {
+.post > .post-header .post-tags .post-meta-separator {
   color: var(--global-text-color-light);
 }
 .post .post-content blockquote {
@@ -864,12 +864,12 @@ html.transition *:after {
   padding: 8px;
 }
 @media (max-width: 576px) {
-  .post .post-heading {
+  .post > .post-header .post-heading {
     align-items: flex-start;
     flex-direction: column;
     gap: 0.25rem;
   }
-  .post .post-meta {
+  .post > .post-header .post-meta {
     text-align: left;
     white-space: normal;
   }
