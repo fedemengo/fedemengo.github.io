@@ -10,7 +10,7 @@ The Fibonacci Heap is the famous data structure that allows to decrease the runn
 from $$O((V+E)\log V)$$ to $$O(V\log V + E)$$ since it implements the `decrease_key` operation in $$\Theta(1)$$ amortized time.
 It also support a set of operations that make it a “mergeable heap” (see mergeable heap).
 
-{% include figure.html path="assets/img/blog/2018-01-18/fibo-heap.jpg" class="img-fluid centered" zoomable=false %}
+{% include figure.html path="assets/img/blog/2018-01-18/fibo-heap.png" class="img-fluid centered" style="max-width: 700px;" zoomable=false %}
 
 To achieve such performance a fibonacci heap is basically a linked list of min-heap-ordered rooted trees (that are, in turn,
 implemented as linked list of smaller min-heap-ordered rooted tree). To implement the structure we first need to implement
