@@ -10,9 +10,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Maximum non adjacent subsequence | fedemengo</title>
+    <title>Brainviz: a portable, extensible 3D brain viewer | fedemengo</title>
     <meta name="author" content="fedemengo  ">
-    <meta name="description" content="Find the non adjacent subsequence with maximum sum">
+    <meta name="description" content="Save a Brainviz scene—including overlays, focus, colours, and camera—in a URL, then embed that exact view anywhere.">
     <meta name="keywords" content="jekyll, jekyll-theme, academic-website, portfolio-website">
 
 
@@ -34,7 +34,7 @@
     
     <script src="/assets/js/content_width.js"></script>
     <link rel="stylesheet" href="/assets/css/main.css">
-    <link rel="canonical" href="https://fedemengo.github.io/blog/2018/11/max-nonadj-subsequence/">
+    <link rel="canonical" href="https://fedemengo.github.io/blog/2026/08/brainviz-shareable-views/">
 
     <!-- Dark Mode -->
     
@@ -118,67 +118,50 @@
 
   <header class="post-header">
     <div class="post-heading">
-      <h1 class="post-title">Maximum non adjacent subsequence</h1>
-      <p class="post-meta">November 14, 2018</p>
+      <h1 class="post-title">Brainviz: a portable, extensible 3D brain viewer</h1>
+      <p class="post-meta">August 3, 2026</p>
     </div>
     <p class="post-tags">
-      <a href="/blog/2018"><i class="fas fa-calendar fa-sm"></i> 2018</a>
+      <a href="/blog/2026"><i class="fas fa-calendar fa-sm"></i> 2026</a>
         <span class="post-meta-separator">·</span>
-        <a href="/blog/category/puzzle">
-          <i class="fas fa-tag fa-sm"></i> puzzle</a>
+        <a href="/blog/category/projects">
+          <i class="fas fa-tag fa-sm"></i> projects</a>
           
         <span class="post-meta-separator">·</span>
-        <a href="/blog/tag/cpp">
-          <i class="fas fa-hashtag fa-sm"></i> cpp</a>
+        <a href="/blog/tag/brainviz">
+          <i class="fas fa-hashtag fa-sm"></i> brainviz</a>
+          <a href="/blog/tag/neuroscience">
+          <i class="fas fa-hashtag fa-sm"></i> neuroscience</a>
+          <a href="/blog/tag/visualization">
+          <i class="fas fa-hashtag fa-sm"></i> visualization</a>
           
 
     </p>
   </header>
 
   <article class="post-content">
-    <p>Given an arrays of \(A\) size \(N\), find a sequence of non adjacent value with the larger sum, the sequence should be something like \(A_i, A_{i+k}, A_{i+k'}, \cdots, A_{i+k^n}, \forall k &gt; 1\)</p>
+    <p><a href="https://fedemengo.github.io/brainviz/">Brainviz</a> is an interactive 3D viewer for human brain structure in MNI space. It brings cortical parcellations, subcortical structures, connectomes, and white-matter tract bundles into one place.</p>
 
-<p>It’s easy to solve this problem with dynamic programming<!--more--></p>
+<p><strong>Copy link</strong> records the complete scene: visible layers, focus regions, colours, display options, and camera position. The configuration is compressed and stored after <code class="language-plaintext highlighter-rouge">#</code>, so it stays client-side and needs no account or backend.</p>
 
-<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span class="kt">int</span> <span class="nf">dp</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="o">&amp;</span><span class="n">v</span><span class="p">,</span> <span class="kt">int</span> <span class="n">index</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">if</span><span class="p">(</span><span class="n">index</span> <span class="o">&gt;=</span> <span class="n">v</span><span class="p">.</span><span class="n">size</span><span class="p">())</span>
-        <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<p>Here is a saved view of the default mode network (DMN), with the cortex, structural connectome, and white-matter tracts visible together.</p>
 
-    <span class="k">if</span><span class="p">(</span><span class="n">memo</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">memo</span><span class="p">[</span><span class="n">index</span><span class="p">];</span>
+<iframe src="https://fedemengo.github.io/brainviz/#c=zfZZtb-I4EMe_ymn2beDyCCHvKLuoSBQQsF3pVhUyiSG-NTGynV6riu9-siHJmN7tu_znNx57xmM7H3AQ8kQ0ZKEHR1pRSTQtIIPQDwc9P-350dYPstDPIr8fJ-lf4EFBNFFUQ_YB6kxyChk8LWZBEi7mrAp9f5SP1fsJPHilUjFRQRZcPFCaaGrG6JKezJiCyF_gASfvVD4zxfbcYlVSziHTsqYe5EJq-tYoVe-NgeWEQ3YgXFmPqqK5Fibk1UtLkmt1VRcPjlLUZxR_TxThvSOpjpyRNgxnpz3LW1kwWuX0XBJuln8z7iVhldL01Mz0SistWW7i3lzGSomcEW2zvjpNqKR7ynndDpuI04kpVUuTxs0kScUI_2NB5WubyEqKv2nexbo09Xggij6JwhSRVESL0zt4oChvnH-CyktCD1TGvv82_PMrPZCaa3hBXhstaXXUpS35f3pfd63xnwgu5G-c4YvvhzQfgt1qWee6ltQOuq20NYIHrDrwW5H8fhB5101fnknO9Lu1Nam2tsCDkp6YOpdUmnDrpnUekfXDaQfYC11C10Qwh647Guj0FKzt8kvxz5zsKVftvtK3s5B6To-0KlrjmVSU_2CFKWIU-7gXn4iWzEypcsD2b8WRKsiC2Hfcp4xrKjfdDjbd3zhMavlqjuWnpv9B2bHUywoyqERBlTPbQhTXLYAMSnYsufH9tJ7fe5gYU_Zm74QveZSH--GnCC0fHNLDPmmq_FBXBTfpfsBuZy-Mn1fQG0937V4YsW7FZDddPSJ41S6_ww5dPbrYaJffYZcuXbpE9NvTBEGjOjYdbxEzqmOz6RJnayWicwfOMXsqHGhlR1fOnEZ1bDOfBgha6dDQpaFLI5dGiH7HK_qO1_PspGkUquwDrusDzn-C98solP9k1S0DfT93rTPpoqLPxWw2wxNajVaz-IQd-nw_3BruPO4dXO5SxMZr3Plrp0Z4P41CbLXd4epetcud1rXa5c65sBrxjTP3xpl7sxs7cDd2qRPYSIduXLpB9Ot6i6e1Ep0pfKJwV8zxmZgjssS1XeLarp38jOrYdu3kZ6VDcX5WOhTnZ-UaXi43A37-zIPXOKKHLklvtv95Aiybs-rXtpRUlYIXt-eR1FqsxfWfqvk5ICcqibluz0Kx269AL0jT_iCOgyQdBMN4NIxDrzfqR0mSDtM0HI2SQeDHXpiE_SSMoigdxbE_isPBiweayKO9tnthP4oTPxyOwihJo1Eax_dB_CTxen4_DWJ_GAySJBxGcTQcvFwu_wI&amp;embed=1" title="Brainviz: default mode network" width="100%" height="520" style="border: 0; border-radius: 8px" loading="lazy"></iframe>
 
-    <span class="c1">// including the current value "v[index]" require to skip the next at "index + 1"</span>
-    <span class="kt">int</span> <span class="n">incl</span> <span class="o">=</span> <span class="n">v</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">+</span> <span class="n">dp</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">index</span> <span class="o">+</span> <span class="mi">2</span><span class="p">);</span>
-    <span class="c1">// excluding the current value allows us to consider the next value at "index + 1"</span>
-    <span class="kt">int</span> <span class="n">excl</span> <span class="o">=</span> <span class="n">dp</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">);</span>
+<p style="text-align: center"><a href="https://fedemengo.github.io/brainviz/#c=zfZZtb-I4EMe_ymn2beDyCCHvKLuoSBQQsF3pVhUyiSG-NTGynV6riu9-siHJmN7tu_znNx57xmM7H3AQ8kQ0ZKEHR1pRSTQtIIPQDwc9P-350dYPstDPIr8fJ-lf4EFBNFFUQ_YB6kxyChk8LWZBEi7mrAp9f5SP1fsJPHilUjFRQRZcPFCaaGrG6JKezJiCyF_gASfvVD4zxfbcYlVSziHTsqYe5EJq-tYoVe-NgeWEQ3YgXFmPqqK5Fibk1UtLkmt1VRcPjlLUZxR_TxThvSOpjpyRNgxnpz3LW1kwWuX0XBJuln8z7iVhldL01Mz0SistWW7i3lzGSomcEW2zvjpNqKR7ynndDpuI04kpVUuTxs0kScUI_2NB5WubyEqKv2nexbo09Xggij6JwhSRVESL0zt4oChvnH-CyktCD1TGvv82_PMrPZCaa3hBXhstaXXUpS35f3pfd63xnwgu5G-c4YvvhzQfgt1qWee6ltQOuq20NYIHrDrwW5H8fhB5101fnknO9Lu1Nam2tsCDkp6YOpdUmnDrpnUekfXDaQfYC11C10Qwh647Guj0FKzt8kvxz5zsKVftvtK3s5B6To-0KlrjmVSU_2CFKWIU-7gXn4iWzEypcsD2b8WRKsiC2Hfcp4xrKjfdDjbd3zhMavlqjuWnpv9B2bHUywoyqERBlTPbQhTXLYAMSnYsufH9tJ7fe5gYU_Zm74QveZSH--GnCC0fHNLDPmmq_FBXBTfpfsBuZy-Mn1fQG0937V4YsW7FZDddPSJ41S6_ww5dPbrYaJffYZcuXbpE9NvTBEGjOjYdbxEzqmOz6RJnayWicwfOMXsqHGhlR1fOnEZ1bDOfBgha6dDQpaFLI5dGiH7HK_qO1_PspGkUquwDrusDzn-C98solP9k1S0DfT93rTPpoqLPxWw2wxNajVaz-IQd-nw_3BruPO4dXO5SxMZr3Plrp0Z4P41CbLXd4epetcud1rXa5c65sBrxjTP3xpl7sxs7cDd2qRPYSIduXLpB9Ot6i6e1Ep0pfKJwV8zxmZgjssS1XeLarp38jOrYdu3kZ6VDcX5WOhTnZ-UaXi43A37-zIPXOKKHLklvtv95Aiybs-rXtpRUlYIXt-eR1FqsxfWfqvk5ICcqibluz0Kx269AL0jT_iCOgyQdBMN4NIxDrzfqR0mSDtM0HI2SQeDHXpiE_SSMoigdxbE_isPBiweayKO9tnthP4oTPxyOwihJo1Eax_dB_CTxen4_DWJ_GAySJBxGcTQcvFwu_wI" target="_blank" rel="noopener">Open in Brainviz ↗</a></p>
 
-    <span class="n">memo</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">max</span><span class="p">(</span><span class="n">incl</span><span class="p">,</span> <span class="n">excl</span><span class="p">);</span>
+<p>Saved views can also combine several selections. This example brings together the default mode network (DMN), frontoparietal control network, language network, and multiple-demand network (MDN).</p>
 
-    <span class="k">return</span> <span class="n">memo</span><span class="p">[</span><span class="n">index</span><span class="p">];</span>
-<span class="p">}</span></code></pre></figure>
+<iframe src="https://fedemengo.github.io/brainviz/#c=zfZZtb-I4EMe_ymn2bWCdR0LeUXZRK1FAwHalW1XIJEPi25Ag2-m1qvjuJzuQ2LS37_Kf32TGMx7HeYdDzY9UQuI5kGOFnErMIAGPeNGAxAPib4mbeFESRkPXHf8NDmRUUoESkncQJ5oiJPC4eHBDbzFnlUfIOJ2ItyM48IJcsLqCxD07ICSVqN6RBR7VOxnlv8GBkr4hf2KC7UuNRYFlCcmBlgIdSGsu8RUSyRt0QDR7ZWApNT2qClNZq5itl-Q0laJVZwdyXjcnI8GeCloOclrlJaNdmJId9yztZMawSvFU0FKt_2Lcc8oqIfF4zfSCleQsVXEvLhMh6pRRqctunabIcY9l2XSvTevjkQnRcFXGxcRpxWj51wL5S1fIitf_YNrHOl_7cUcFPtaZ6iKtqKyPb-CAwPLq_AtEWlA8IA8IeR19_YYH2pRSOVn2aV1pI8qvJa3yhuZ4kcdsgK8SqwwzeDZibyTHKpeF3qlPcyTup1m02cxzNZiZ2kG55prWZc3_kAi-EOJhOvq8rAS-ZCkhhNwWqN8bYwesBcCXKA1dQkBPLG9S2XDUC7n0uzOCA6w6lJetJkPXd9rZXZ5oyuSbtl03rLO5DhR4ZOJUIFfh1tcTcG9Y362hhn0tC-iPAsyhn_ErtE4GrPXyi_rfOd1jKbrpxNdTzeUcc6yyzniiFZY_WaY21Q-IeaIeqeRMpRQpmPbvWY4CEjcglvuMlRL5pp_Ddox7h2nDX1SXPxzdn8jyQi4rSKCqMxRWtkWdtVsACRQsL0rl-2E9f_ZQMWbstd3i1E-9_ehDhI5Hh_iwD69dvmuqrFTlvsNup797v1owmMx23V4ose7EdDdb3Ruw1Ta_wRZd3dtYaZvfYJsubbo06PfHqQGV6tlssjWYUj17mC3NarU06NyCc5M9ZhbUsqcrK6dSPdvMZ64BtbSoZ1PPpr5NfYP-MFf0w1zPk1WmUkZn78y-3pn1T839Usqof7rql2E8P_WjM-2jGo-Lh4cHM6HWxmoWH7BFn25f14Ybj1sHm9vUYJO1Oflrq0fmfiplsNV2Z3a31Ta3Rldrm1vnQmuDb6zcGyv3Zjex4G5iUyuwkhbd2HRj0G_rrZlWS-NMmSfKnIq5eSbmBlmavV2avV1b9SnVs-3aqk9Li5r1aWlRsz4t1_B8vhimxvWnLryro3nR-Rfb_1wBms1Z9XtbcBRFXWaX65E2sl7X7a_h9ReHHpFT9bk91YJdfmgG_ng49n0vCEM3Jp4XOnE09KJxTPwg8gOfuLHjBe4w8Efj0SgiAYljL3x2QFKe6282GcZ-6BMSBGEYRlFAImfgDkduQFzi-XEUjILIGzkDf0jiOIjdMfHJKHKj2H8-n_8D&amp;embed=1" title="Brainviz: selected networks" width="100%" height="520" style="border: 0; border-radius: 8px" loading="lazy"></iframe>
 
-<p>Using a similar intuition it’s possible to come up with a linear solution</p>
+<p style="text-align: center"><a href="https://fedemengo.github.io/brainviz/#c=zfZZtb-I4EMe_ymn2bWCdR0LeUXZRK1FAwHalW1XIJEPi25Ag2-m1qvjuJzuQ2LS37_Kf32TGMx7HeYdDzY9UQuI5kGOFnErMIAGPeNGAxAPib4mbeFESRkPXHf8NDmRUUoESkncQJ5oiJPC4eHBDbzFnlUfIOJ2ItyM48IJcsLqCxD07ICSVqN6RBR7VOxnlv8GBkr4hf2KC7UuNRYFlCcmBlgIdSGsu8RUSyRt0QDR7ZWApNT2qClNZq5itl-Q0laJVZwdyXjcnI8GeCloOclrlJaNdmJId9yztZMawSvFU0FKt_2Lcc8oqIfF4zfSCleQsVXEvLhMh6pRRqctunabIcY9l2XSvTevjkQnRcFXGxcRpxWj51wL5S1fIitf_YNrHOl_7cUcFPtaZ6iKtqKyPb-CAwPLq_AtEWlA8IA8IeR19_YYH2pRSOVn2aV1pI8qvJa3yhuZ4kcdsgK8SqwwzeDZibyTHKpeF3qlPcyTup1m02cxzNZiZ2kG55prWZc3_kAi-EOJhOvq8rAS-ZCkhhNwWqN8bYwesBcCXKA1dQkBPLG9S2XDUC7n0uzOCA6w6lJetJkPXd9rZXZ5oyuSbtl03rLO5DhR4ZOJUIFfh1tcTcG9Y362hhn0tC-iPAsyhn_ErtE4GrPXyi_rfOd1jKbrpxNdTzeUcc6yyzniiFZY_WaY21Q-IeaIeqeRMpRQpmPbvWY4CEjcglvuMlRL5pp_Ddox7h2nDX1SXPxzdn8jyQi4rSKCqMxRWtkWdtVsACRQsL0rl-2E9f_ZQMWbstd3i1E-9_ehDhI5Hh_iwD69dvmuqrFTlvsNup797v1owmMx23V4ose7EdDdb3Ruw1Ta_wRZd3dtYaZvfYJsubbo06PfHqQGV6tlssjWYUj17mC3NarU06NyCc5M9ZhbUsqcrK6dSPdvMZ64BtbSoZ1PPpr5NfYP-MFf0w1zPk1WmUkZn78y-3pn1T839Usqof7rql2E8P_WjM-2jGo-Lh4cHM6HWxmoWH7BFn25f14Ybj1sHm9vUYJO1Oflrq0fmfiplsNV2Z3a31Ta3Rldrm1vnQmuDb6zcGyv3Zjex4G5iUyuwkhbd2HRj0G_rrZlWS-NMmSfKnIq5eSbmBlmavV2avV1b9SnVs-3aqk9Li5r1aWlRsz4t1_B8vhimxvWnLryro3nR-Rfb_1wBms1Z9XtbcBRFXWaX65E2sl7X7a_h9ReHHpFT9bk91YJdfmgG_ng49n0vCEM3Jp4XOnE09KJxTPwg8gOfuLHjBe4w8Efj0SgiAYljL3x2QFKe6282GcZ-6BMSBGEYRlFAImfgDkduQFzi-XEUjILIGzkDf0jiOIjdMfHJKHKj2H8-n_8D" target="_blank" rel="noopener">Open in Brainviz ↗</a></p>
 
-<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><span class="kt">int</span> <span class="nf">linear</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="o">&amp;</span><span class="n">v</span><span class="p">)</span> <span class="p">{</span>
-    <span class="kt">int</span> <span class="n">incl</span> <span class="o">=</span> <span class="n">v</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">excl</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">tmp</span><span class="p">;</span>
+<p><strong>Copy embed</strong> creates the same saved view as a clean iframe. Give it an explicit height; readers can press <code class="language-plaintext highlighter-rouge">z</code> to reveal the controls.</p>
 
-    <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">1</span><span class="p">;</span> <span class="n">i</span><span class="o">&lt;</span><span class="n">N</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">){</span>
-        <span class="n">tmp</span> <span class="o">=</span> <span class="n">incl</span><span class="p">;</span>
-        <span class="n">incl</span> <span class="o">=</span> <span class="n">max</span><span class="p">(</span><span class="n">incl</span><span class="p">,</span> <span class="n">excl</span> <span class="o">+</span> <span class="n">v</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
-        <span class="n">excl</span> <span class="o">=</span> <span class="n">tmp</span><span class="p">;</span>
-    <span class="p">}</span>
-    <span class="k">return</span> <span class="n">std</span><span class="o">::</span><span class="n">max</span><span class="p">(</span><span class="n">incl</span><span class="p">,</span> <span class="n">excl</span><span class="p">);</span>
-<span class="p">}</span></code></pre></figure>
-
-<p>By analyzing all possible cases we see that</p>
-<ul>
-  <li>if <code class="language-plaintext highlighter-rouge">incl &gt; excl + v[i]</code> we don’t care for the current value, hence we can decide both to consider the next element or to skip it. So <code class="language-plaintext highlighter-rouge">incl</code> is going to be equal to <code class="language-plaintext highlighter-rouge">excl</code>
-</li>
-  <li>if <code class="language-plaintext highlighter-rouge">incl &lt; excl + v[i]</code> then <code class="language-plaintext highlighter-rouge">incl</code> has the current value, while <code class="language-plaintext highlighter-rouge">excl</code> is set to the previous value of <code class="language-plaintext highlighter-rouge">incl</code>
-</li>
-</ul>
-
-<p>Basically at every iteration <code class="language-plaintext highlighter-rouge">incl</code> and <code class="language-plaintext highlighter-rouge">excl</code> are swapped (except for the case when using a value doesn’t led to a better solution)</p>
+<div class="language-html highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;iframe</span> <span class="na">src=</span><span class="s">"https://fedemengo.github.io/brainviz/#c=…&amp;embed=1"</span>
+        <span class="na">title=</span><span class="s">"Brainviz"</span> <span class="na">width=</span><span class="s">"100%"</span> <span class="na">height=</span><span class="s">"520"</span>
+        <span class="na">style=</span><span class="s">"border: 0; border-radius: 8px"</span> <span class="na">loading=</span><span class="s">"lazy"</span><span class="nt">&gt;&lt;/iframe&gt;</span>
+</code></pre></div></div>
 
   </article>
 
@@ -194,12 +177,6 @@
     <!-- Adds related posts to the end of an article -->
     <!-- h2 class="text-3xl font-semibold mb-4 mt-12">Enjoy Reading This Article?</h2 -->
     <p class="mb-2">More posts</p>
-  
-
-  <li class="my-2">
-    <a class="text-pink-700 underline font-semibold hover:text-pink-800" href="/blog/2026/08/brainviz-shareable-views/">Brainviz: a portable, extensible 3D brain viewer</a>
-  </li>
-
   
 
   <li class="my-2">
@@ -222,6 +199,12 @@
 
   <li class="my-2">
     <a class="text-pink-700 underline font-semibold hover:text-pink-800" href="/blog/2019/06/limit-mem-usage/">Limit process memory usage on Linux</a>
+  </li>
+
+  
+
+  <li class="my-2">
+    <a class="text-pink-700 underline font-semibold hover:text-pink-800" href="/blog/2019/01/FastBFT/">Scalable Byzantine Consensus via Hardware-assisted Secrete Sharing</a>
   </li>
 
 </div>
