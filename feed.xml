@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.4.1">Jekyll</generator><link href="https://fedemengo.github.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://fedemengo.github.io/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-08-03T22:25:10+00:00</updated><id>https://fedemengo.github.io/feed.xml</id><title type="html">fedemengo</title><entry><title type="html">Brainviz: a portable, extensible 3D brain viewer</title><link href="https://fedemengo.github.io/blog/2026/08/brainviz-shareable-views/" rel="alternate" type="text/html" title="Brainviz: a portable, extensible 3D brain viewer" /><published>2026-08-03T00:00:00+00:00</published><updated>2026-08-03T00:00:00+00:00</updated><id>https://fedemengo.github.io/blog/2026/08/brainviz-shareable-views</id><content type="html" xml:base="https://fedemengo.github.io/blog/2026/08/brainviz-shareable-views/"><![CDATA[<p><a href="https://fedemengo.github.io/brainviz/">Brainviz</a> is a portable, extensible 3D viewer for human brain structure in MNI space. It brings cortical parcellations, subcortical structures, connectomes, and white-matter tract bundles into one scene—so relationships that are usually split across figures can be explored together.</p>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.4.1">Jekyll</generator><link href="https://fedemengo.github.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://fedemengo.github.io/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-08-03T22:32:03+00:00</updated><id>https://fedemengo.github.io/feed.xml</id><title type="html">fedemengo</title><entry><title type="html">Brainviz: a portable, extensible 3D brain viewer</title><link href="https://fedemengo.github.io/blog/2026/08/brainviz-shareable-views/" rel="alternate" type="text/html" title="Brainviz: a portable, extensible 3D brain viewer" /><published>2026-08-03T00:00:00+00:00</published><updated>2026-08-03T00:00:00+00:00</updated><id>https://fedemengo.github.io/blog/2026/08/brainviz-shareable-views</id><content type="html" xml:base="https://fedemengo.github.io/blog/2026/08/brainviz-shareable-views/"><![CDATA[<p><a href="https://fedemengo.github.io/brainviz/">Brainviz</a> is a portable, extensible 3D viewer for human brain structure in MNI space. It brings cortical parcellations, subcortical structures, connectomes, and white-matter tract bundles into one scene—so relationships that are usually split across figures can be explored together.</p>
 
 <h2 id="one-network-many-layers">One network, many layers</h2>
 
@@ -28,7 +28,7 @@
     
 
     <!-- Fallback to the original file -->
-    <img src="/assets/img/blog/2026-08-03/brainviz-yeo7.gif" class="img-fluid centered" width="auto" height="auto" style="height: 520px !important; width: auto; max-width: 100%;" onerror="this.onerror=null; $('.responsive-img-srcset').remove();" />
+    <img src="/assets/img/blog/2026-08-03/brainviz-yeo7.gif" class="img-fluid centered" width="auto" height="auto" style="display: block; height: auto; width: auto; max-height: 520px; max-width: 100%; margin: 0 auto;" onerror="this.onerror=null; $('.responsive-img-srcset').remove();" />
 
   </picture><figcaption class="caption">Default mode and frontoparietal control networks in an inflated-cortex rotation.</figcaption>
 
@@ -48,7 +48,7 @@
     
 
     <!-- Fallback to the original file -->
-    <img src="/assets/img/blog/2026-08-03/brainviz-auditory-tracts.png" class="img-fluid centered" width="auto" height="auto" data-zoomable="" style="height: 520px !important; width: auto; max-width: 100%;" onerror="this.onerror=null; $('.responsive-img-srcset').remove();" />
+    <img src="/assets/img/blog/2026-08-03/brainviz-auditory-tracts.png" class="img-fluid centered" width="auto" height="auto" data-zoomable="" style="display: block; height: auto; width: auto; max-height: 520px; max-width: 100%; margin: 0 auto;" onerror="this.onerror=null; $('.responsive-img-srcset').remove();" />
 
   </picture><figcaption class="caption">Auditory association and early auditory cortex in the left hemisphere, with their associated tractography and selection legend.</figcaption>
 
