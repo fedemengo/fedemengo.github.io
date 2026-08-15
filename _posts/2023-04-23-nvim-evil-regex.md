@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  How I Made Neovim 300x Faster
+title:  Making Neovim 300× Faster
 description: Tracking down an evil regex in Vim and Neovim
 tags: vim nvim regex
 categories: debugging
