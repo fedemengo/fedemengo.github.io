@@ -2,7 +2,7 @@
 # Site settings
 # -----------------------------------------------------------------------------
 
-title: fedemengo # the website title (if blank, full name will be used instead)
+title: Pleronemia # the website title (if blank, full name will be used instead)
 first_name: fedemengo
 middle_name:
 last_name:
@@ -122,9 +122,9 @@ bing_site_verification:  # out your bing-site-verification ID (Bing Webmaster)
 # Blog
 # -----------------------------------------------------------------------------
 
-blog_name: thoughts and notes
+blog_name: Pleronemia
 blog_nav_title: blog
-blog_description: bits of everything
+blog_description: bits, computers, and strange loops
 permalink: /blog/:year/:month/:title/
 
 # Pagination

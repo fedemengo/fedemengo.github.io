@@ -2,7 +2,7 @@
 layout: about
 title: about
 permalink: /
-subtitle: bits, computers and everything in between
+subtitle: bits, computers, and strange loops
 
 profile:
   align: right
