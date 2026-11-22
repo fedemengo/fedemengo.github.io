@@ -39,7 +39,7 @@ layout: default
           </div>
           {%- endif %}
 
-          <div class="clearfix mt-5">
+          <div class="clearfix about-intro">
             {{ content }}
           </div>
 
@@ -51,7 +51,7 @@ layout: default
 
           <!-- Latest posts -->
           {% if page.latest_posts -%}
-            <h2 class="mt-5"><a href="{{ '/blog/' | relative_url }}" style="color: inherit;">latest posts</a></h2>
+            <h2 class="latest-posts-heading"><a href="{{ '/blog/' | relative_url }}" style="color: inherit;">latest posts</a></h2>
             {%- include latest_posts.html %}
           {%- endif %}
 

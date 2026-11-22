@@ -18,6 +18,8 @@
     {%- endif %}
   </head>
 
+  <body class="{% if site.navbar_fixed %}fixed-top-nav{% endif %} {% unless site.footer_fixed %}sticky-bottom-footer{% endunless %}">
+
   <d-front-matter>
     <script async type="text/json">{
       "title": "{{ page.title }}",
@@ -53,8 +55,6 @@
       }
     }</script>
   </d-front-matter>
-
-  <body class="{%- if site.navbar_fixed -%}fixed-top-nav{%- endif -%} {%- unless site.footer_fixed -%}sticky-bottom-footer{%- endunless -%}">
 
     <!-- Header -->
     {%- include header.html %}
@@ -113,5 +113,6 @@
     {% include scripts/bootstrap.html %}
     {% include scripts/analytics.html %}
     {% include scripts/progressBar.html %}
+    {% include scripts/plotly.html %}
   </body>
 </html>

@@ -1,0 +1,14 @@
+<svg class="post-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+  {%- case include.name -%}
+    {%- when 'calendar' -%}
+      <rect x="4" y="5" width="16" height="15" rx="2"/>
+      <path d="M16 3v4M8 3v4M4 10h16"/>
+    {%- when 'tag' -%}
+      <path d="M3 4v6a2 2 0 0 0 .6 1.4l8 8a2 2 0 0 0 2.8 0l5-5a2 2 0 0 0 0-2.8l-8-8A2 2 0 0 0 10 3H4a1 1 0 0 0-1 1Z"/>
+      <circle cx="7.5" cy="7.5" r=".5"/>
+    {%- when 'hash' -%}
+      <path d="M5 9h14M4 15h14M11 4 7 20M17 4l-4 16"/>
+    {%- when 'external' -%}
+      <path d="M13 5h6v6m0-6-9 9m1-9H6a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-5"/>
+  {%- endcase -%}
+</svg>

@@ -195,46 +195,38 @@ where $$N$$ is the file-size label in thousands of characters and $$t(N)$$ is th
 {% include figure.html path="assets/img/blog/2023-04-23/nvim-plot.png" class="img-fluid rounded" %}
 {% endcomment %}
 
-```sh
-                                   nvim startup: evil regex timing
-      ┌──────────────────────────────────────────────────────────────────────────────────────┐
-7801.9┤ .. N^2                                                                              x│
-      │ xx data                                                                            . │
-      │                                                                                   .  │
-      │                                                                                 ..   │
-      │                                                                                .     │
-6501.7┤                                                                              ..      │
-      │                                                                             .        │
-      │                                                                           ..         │
-      │                                                                          .           │
-      │                                                                        x.            │
-      │                                                                       .              │
-5201.5┤                                                                     ..               │
-      │                                                                    .                 │
-      │                                                                  ..                  │
-      │                                                                x.                    │
-      │                                                              ..                      │
-3901.3┤                                                           ...                        │
-      │                                                         ..                           │
-      │                                                       ..                             │
-      │                                                     ..                               │
-      │                                                   ..                                 │
-2601.2┤                                                 ..                                   │
-      │                                              ...                                     │
-      │                                            ..                                        │
-      │                                          x.                                          │
-      │                                       ...                                            │
-      │                                    ...                                               │
-1301.0┤                                 ...                                                  │
-      │                             ....                                                     │
-      │                         ....                                                         │
-      │                     x...                                                             │
-      │            .........                                                                 │
-   0.8┤x.x.....x...                                                                          │
-      └┬────────────────────┬─────────────────────┬────────────────────┬────────────────────┬┘
-      1.0                 25.8                  50.5                 75.2               100.0
-seconds                         normalized file size (1 ~= 10k chars)
-
+```plotly
+{
+  "data": [
+    {
+      "type": "scatter",
+      "mode": "lines+markers",
+      "name": "Measured pattern time",
+      "x": [0.1, 0.2, 0.3, 0.5, 0.8, 1, 1.5, 2, 2.5, 3],
+      "y": [0.011510, 0.036166, 0.076494, 0.209784, 0.539847, 0.810021, 1.818474, 3.224603, 5.062781, 7.424943],
+      "line": {"color": "#087e8b", "width": 2},
+      "marker": {"size": 7},
+      "hovertemplate": "%{x} × 10k characters: %{y:.3f} s<extra></extra>"
+    },
+    {
+      "type": "scatter",
+      "mode": "lines",
+      "name": "N²",
+      "x": [0.1, 0.2, 0.3, 0.5, 0.8, 1, 1.5, 2, 2.5, 3],
+      "y": [0.01, 0.04, 0.09, 0.25, 0.64, 1, 2.25, 4, 6.25, 9],
+      "line": {"color": "#d67b24", "width": 2, "dash": "dash"},
+      "hovertemplate": "N=%{x}: N²=%{y:.3f}<extra></extra>"
+    }
+  ],
+  "layout": {
+    "height": 390,
+    "margin": {"l": 55, "r": 15, "t": 20, "b": 55},
+    "xaxis": {"title": "Characters (10k)", "rangemode": "tozero"},
+    "yaxis": {"title": "Seconds", "rangemode": "tozero"},
+    "legend": {"orientation": "h", "y": 1.12},
+    "hovermode": "x unified"
+  }
+}
 ```
 
 I spent some time trying to understand why it was written that way. After all, `[0-9:.]* *execve(` is equivalent to `execve(`, because both `[0-9:.]` and the space are matched zero or more times. They do not constrain the match unless the regex is anchored.

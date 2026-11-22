@@ -17,7 +17,7 @@
     {%- include header.html %}
 
     <!-- Content -->
-    <div class="container mt-5" style="max-width: var(--reader-content-width, {{ content_max_width }});">
+    <div class="container page-content" style="max-width: var(--reader-content-width, {{ content_max_width }});">
       {{ content }}
     </div>
 
@@ -33,5 +33,6 @@
     {% include scripts/mathjax.html %}
     {% include scripts/analytics.html %}
     {% include scripts/progressBar.html %}
+    {% include scripts/plotly.html %}
   </body>
 </html>

@@ -1,0 +1,4 @@
+{%- if page.plotly or content contains 'language-plotly' -%}
+  <script defer src="https://cdn.plot.ly/plotly-4.1.1.min.js"></script>
+  <script defer src="{{ '/assets/js/plotly-charts.js' | relative_url }}"></script>
+{%- endif -%}

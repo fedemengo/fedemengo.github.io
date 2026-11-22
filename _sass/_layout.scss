@@ -18,12 +18,22 @@ body.fixed-top-nav {
 }
 
 body.sticky-bottom-footer {
-  // Remove padding below footer.
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
   padding-bottom: 0;
 }
 
 .container {
   max-width: $max-content-width;
+}
+
+.page-content {
+  margin-block: clamp(1.5rem, 4vw, 2.5rem) 1.5rem;
+}
+
+.distill {
+  margin-bottom: 1.5rem;
 }
 
 // Profile
