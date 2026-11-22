@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.4.1">Jekyll</generator><link href="https://fedemengo.github.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://fedemengo.github.io/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-08-17T11:00:28+00:00</updated><id>https://fedemengo.github.io/feed.xml</id><title type="html">Pleronemia</title><entry><title type="html">Brainviz: a portable, extensible 3D brain viewer</title><link href="https://fedemengo.github.io/blog/2026/08/brainviz-shareable-views/" rel="alternate" type="text/html" title="Brainviz: a portable, extensible 3D brain viewer" /><published>2026-08-03T00:00:00+00:00</published><updated>2026-08-03T00:00:00+00:00</updated><id>https://fedemengo.github.io/blog/2026/08/brainviz-shareable-views</id><content type="html" xml:base="https://fedemengo.github.io/blog/2026/08/brainviz-shareable-views/"><![CDATA[<p><a href="https://fedemengo.github.io/brainviz/">Brainviz</a> is a portable, extensible 3D viewer for human brain structure in MNI space. It brings cortical parcellations, connectomes, and white-matter tract bundles into one scene, so relationships that are usually split across figures can be explored together.</p>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.4.1">Jekyll</generator><link href="https://fedemengo.github.io/feed.xml" rel="self" type="application/atom+xml" /><link href="https://fedemengo.github.io/" rel="alternate" type="text/html" hreflang="en" /><updated>2026-11-22T13:28:39+00:00</updated><id>https://fedemengo.github.io/feed.xml</id><title type="html">Pleronemia</title><entry><title type="html">Brainviz: a portable, extensible 3D brain viewer</title><link href="https://fedemengo.github.io/blog/2026/08/brainviz-shareable-views/" rel="alternate" type="text/html" title="Brainviz: a portable, extensible 3D brain viewer" /><published>2026-08-03T00:00:00+00:00</published><updated>2026-08-03T00:00:00+00:00</updated><id>https://fedemengo.github.io/blog/2026/08/brainviz-shareable-views</id><content type="html" xml:base="https://fedemengo.github.io/blog/2026/08/brainviz-shareable-views/"><![CDATA[<p><a href="https://fedemengo.github.io/brainviz/">Brainviz</a> is a portable, extensible 3D viewer for human brain structure in MNI space. It brings cortical parcellations, connectomes, and white-matter tract bundles into one scene, so relationships that are usually split across figures can be explored together.</p>
 
 <h2 id="one-network-many-layers">One network, many layers</h2>
 
@@ -917,46 +917,38 @@ curr: 'S Y S T E M S   I M P R O V E D ', Time: 0.000s. next: 'Run Date: '
 
 <p>where \(N\) is the file-size label in thousands of characters and \(t(N)\) is the startup time in seconds. The fitted exponent is effectively \(2\), so the measured behavior is quadratic, or \(O(N^2)\).</p>
 
-<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                                   nvim startup: evil regex timing
-      ┌──────────────────────────────────────────────────────────────────────────────────────┐
-7801.9┤ .. N^2                                                                              x│
-      │ xx data                                                                            <span class="nb">.</span> │
-      │                                                                                   <span class="nb">.</span>  │
-      │                                                                                 ..   │
-      │                                                                                <span class="nb">.</span>     │
-6501.7┤                                                                              ..      │
-      │                                                                             <span class="nb">.</span>        │
-      │                                                                           ..         │
-      │                                                                          <span class="nb">.</span>           │
-      │                                                                        x.            │
-      │                                                                       <span class="nb">.</span>              │
-5201.5┤                                                                     ..               │
-      │                                                                    <span class="nb">.</span>                 │
-      │                                                                  ..                  │
-      │                                                                x.                    │
-      │                                                              ..                      │
-3901.3┤                                                           ...                        │
-      │                                                         ..                           │
-      │                                                       ..                             │
-      │                                                     ..                               │
-      │                                                   ..                                 │
-2601.2┤                                                 ..                                   │
-      │                                              ...                                     │
-      │                                            ..                                        │
-      │                                          x.                                          │
-      │                                       ...                                            │
-      │                                    ...                                               │
-1301.0┤                                 ...                                                  │
-      │                             ....                                                     │
-      │                         ....                                                         │
-      │                     x...                                                             │
-      │            .........                                                                 │
-   0.8┤x.x.....x...                                                                          │
-      └┬────────────────────┬─────────────────────┬────────────────────┬────────────────────┬┘
-      1.0                 25.8                  50.5                 75.2               100.0
-seconds                         normalized file size <span class="o">(</span>1 ~<span class="o">=</span> 10k chars<span class="o">)</span>
-
-</code></pre></div></div>
+<pre><code class="language-plotly">{
+  "data": [
+    {
+      "type": "scatter",
+      "mode": "lines+markers",
+      "name": "Measured pattern time",
+      "x": [0.1, 0.2, 0.3, 0.5, 0.8, 1, 1.5, 2, 2.5, 3],
+      "y": [0.011510, 0.036166, 0.076494, 0.209784, 0.539847, 0.810021, 1.818474, 3.224603, 5.062781, 7.424943],
+      "line": {"color": "#087e8b", "width": 2},
+      "marker": {"size": 7},
+      "hovertemplate": "%{x} × 10k characters: %{y:.3f} s&lt;extra&gt;&lt;/extra&gt;"
+    },
+    {
+      "type": "scatter",
+      "mode": "lines",
+      "name": "N²",
+      "x": [0.1, 0.2, 0.3, 0.5, 0.8, 1, 1.5, 2, 2.5, 3],
+      "y": [0.01, 0.04, 0.09, 0.25, 0.64, 1, 2.25, 4, 6.25, 9],
+      "line": {"color": "#d67b24", "width": 2, "dash": "dash"},
+      "hovertemplate": "N=%{x}: N²=%{y:.3f}&lt;extra&gt;&lt;/extra&gt;"
+    }
+  ],
+  "layout": {
+    "height": 390,
+    "margin": {"l": 55, "r": 15, "t": 20, "b": 55},
+    "xaxis": {"title": "Characters (10k)", "rangemode": "tozero"},
+    "yaxis": {"title": "Seconds", "rangemode": "tozero"},
+    "legend": {"orientation": "h", "y": 1.12},
+    "hovermode": "x unified"
+  }
+}
+</code></pre>
 
 <p>I spent some time trying to understand why it was written that way. After all, <code class="language-plaintext highlighter-rouge">[0-9:.]* *execve(</code> is equivalent to <code class="language-plaintext highlighter-rouge">execve(</code>, because both <code class="language-plaintext highlighter-rouge">[0-9:.]</code> and the space are matched zero or more times. They do not constrain the match unless the regex is anchored.</p>
 

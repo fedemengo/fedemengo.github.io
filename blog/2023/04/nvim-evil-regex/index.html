@@ -112,7 +112,7 @@
 
 
     <!-- Content -->
-    <div class="container mt-5" style="max-width: var(--reader-content-width, 960px);">
+    <div class="container page-content" style="max-width: var(--reader-content-width, 960px);">
       <!-- _layouts/post.html -->
 
 <div class="post">
@@ -123,18 +123,25 @@
       <p class="post-meta">April 23, 2023</p>
     </div>
     <p class="post-tags">
-      <a href="/blog/2023"><i class="fas fa-calendar fa-sm"></i> 2023</a>
+      <a href="/blog/2023"><svg class="post-icon" width="24" height="24" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"></rect>
+      <path d="M16 3v4M8 3v4M4 10h16"></path></svg>
+ 2023</a>
         <span class="post-meta-separator">·</span>
         <a href="/blog/category/debugging">
-          <i class="fas fa-tag fa-sm"></i> debugging</a>
+          <svg class="post-icon" width="24" height="24" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4v6a2 2 0 0 0 .6 1.4l8 8a2 2 0 0 0 2.8 0l5-5a2 2 0 0 0 0-2.8l-8-8A2 2 0 0 0 10 3H4a1 1 0 0 0-1 1Z"></path>
+      <circle cx="7.5" cy="7.5" r=".5"></circle></svg>
+ debugging</a>
           
         <span class="post-meta-separator">·</span>
         <a href="/blog/tag/vim">
-          <i class="fas fa-hashtag fa-sm"></i> vim</a>
+          <svg class="post-icon" width="24" height="24" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 9h14M4 15h14M11 4 7 20M17 4l-4 16"></path></svg>
+ vim</a>
           <a href="/blog/tag/nvim">
-          <i class="fas fa-hashtag fa-sm"></i> nvim</a>
+          <svg class="post-icon" width="24" height="24" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 9h14M4 15h14M11 4 7 20M17 4l-4 16"></path></svg>
+ nvim</a>
           <a href="/blog/tag/regex">
-          <i class="fas fa-hashtag fa-sm"></i> regex</a>
+          <svg class="post-icon" width="24" height="24" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 9h14M4 15h14M11 4 7 20M17 4l-4 16"></path></svg>
+ regex</a>
           
 
     </p>
@@ -322,46 +329,38 @@ curr: 'S Y S T E M S   I M P R O V E D ', Time: 0.000s. next: 'Run Date: '
 
 <p>where \(N\) is the file-size label in thousands of characters and \(t(N)\) is the startup time in seconds. The fitted exponent is effectively \(2\), so the measured behavior is quadratic, or \(O(N^2)\).</p>
 
-<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                                   nvim startup: evil regex timing
-      ┌──────────────────────────────────────────────────────────────────────────────────────┐
-7801.9┤ .. N^2                                                                              x│
-      │ xx data                                                                            <span class="nb">.</span> │
-      │                                                                                   <span class="nb">.</span>  │
-      │                                                                                 ..   │
-      │                                                                                <span class="nb">.</span>     │
-6501.7┤                                                                              ..      │
-      │                                                                             <span class="nb">.</span>        │
-      │                                                                           ..         │
-      │                                                                          <span class="nb">.</span>           │
-      │                                                                        x.            │
-      │                                                                       <span class="nb">.</span>              │
-5201.5┤                                                                     ..               │
-      │                                                                    <span class="nb">.</span>                 │
-      │                                                                  ..                  │
-      │                                                                x.                    │
-      │                                                              ..                      │
-3901.3┤                                                           ...                        │
-      │                                                         ..                           │
-      │                                                       ..                             │
-      │                                                     ..                               │
-      │                                                   ..                                 │
-2601.2┤                                                 ..                                   │
-      │                                              ...                                     │
-      │                                            ..                                        │
-      │                                          x.                                          │
-      │                                       ...                                            │
-      │                                    ...                                               │
-1301.0┤                                 ...                                                  │
-      │                             ....                                                     │
-      │                         ....                                                         │
-      │                     x...                                                             │
-      │            .........                                                                 │
-   0.8┤x.x.....x...                                                                          │
-      └┬────────────────────┬─────────────────────┬────────────────────┬────────────────────┬┘
-      1.0                 25.8                  50.5                 75.2               100.0
-seconds                         normalized file size <span class="o">(</span>1 ~<span class="o">=</span> 10k chars<span class="o">)</span>
-
-</code></pre></div></div>
+<pre><code class="language-plotly">{
+  "data": [
+    {
+      "type": "scatter",
+      "mode": "lines+markers",
+      "name": "Measured pattern time",
+      "x": [0.1, 0.2, 0.3, 0.5, 0.8, 1, 1.5, 2, 2.5, 3],
+      "y": [0.011510, 0.036166, 0.076494, 0.209784, 0.539847, 0.810021, 1.818474, 3.224603, 5.062781, 7.424943],
+      "line": {"color": "#087e8b", "width": 2},
+      "marker": {"size": 7},
+      "hovertemplate": "%{x} × 10k characters: %{y:.3f} s&lt;extra&gt;&lt;/extra&gt;"
+    },
+    {
+      "type": "scatter",
+      "mode": "lines",
+      "name": "N²",
+      "x": [0.1, 0.2, 0.3, 0.5, 0.8, 1, 1.5, 2, 2.5, 3],
+      "y": [0.01, 0.04, 0.09, 0.25, 0.64, 1, 2.25, 4, 6.25, 9],
+      "line": {"color": "#d67b24", "width": 2, "dash": "dash"},
+      "hovertemplate": "N=%{x}: N²=%{y:.3f}&lt;extra&gt;&lt;/extra&gt;"
+    }
+  ],
+  "layout": {
+    "height": 390,
+    "margin": {"l": 55, "r": 15, "t": 20, "b": 55},
+    "xaxis": {"title": "Characters (10k)", "rangemode": "tozero"},
+    "yaxis": {"title": "Seconds", "rangemode": "tozero"},
+    "legend": {"orientation": "h", "y": 1.12},
+    "hovermode": "x unified"
+  }
+}
+</code></pre>
 
 <p>I spent some time trying to understand why it was written that way. After all, <code class="language-plaintext highlighter-rouge">[0-9:.]* *execve(</code> is equivalent to <code class="language-plaintext highlighter-rouge">execve(</code>, because both <code class="language-plaintext highlighter-rouge">[0-9:.]</code> and the space are matched zero or more times. They do not constrain the match unless the regex is anchored.</p>
 
@@ -484,7 +483,7 @@ sys     0m0.000s
 
     </div>
 
-    <!-- Footer -->    <footer class="sticky-bottom mt-5">
+    <!-- Footer -->    <footer class="sticky-bottom">
       <div class="container text-center">
         <div>A computer differs from an ordinary machine in that its actions are controlled by a <em>program</em>.
 </div>
@@ -606,5 +605,7 @@ sys     0m0.000s
   }
 </script>
 
+    <script defer src="https://cdn.plot.ly/plotly-4.1.1.min.js"></script>
+  <script defer src="/assets/js/plotly-charts.js"></script>
   </body>
 </html>

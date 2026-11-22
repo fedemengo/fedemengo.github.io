@@ -6,13 +6,14 @@
  * Themes
  ******************************************************************************/
 :root {
+  color-scheme: light;
   --global-bg-color: #ffffff;
   --global-code-bg-color: #f6f4f0;
   --global-code-text-color: #2d2a26;
   --global-text-color: #000000;
   --global-text-color-light: #828282;
   --global-theme-color: #0076df;
-  --global-hover-color: #0076df;
+  --global-hover-color: var(--global-theme-color);
   --global-footer-bg-color: #1C1C1D;
   --global-footer-text-color: #e8e8e8;
   --global-footer-link-color: #ffffff;
@@ -43,13 +44,14 @@
 }
 
 html[data-theme=dark] {
+  color-scheme: dark;
   --global-bg-color: #1C1C1D;
   --global-code-bg-color: #272522;
   --global-code-text-color: #e7dfd3;
   --global-text-color: #e8e8e8;
   --global-text-color-light: #e8e8e8;
   --global-theme-color: #2698BA;
-  --global-hover-color: #2698BA;
+  --global-hover-color: var(--global-theme-color);
   --global-footer-bg-color: #e8e8e8;
   --global-footer-text-color: #1C1C1D;
   --global-footer-link-color: #000000;
@@ -107,11 +109,22 @@ body.fixed-top-nav {
 }
 
 body.sticky-bottom-footer {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
   padding-bottom: 0;
 }
 
 .container {
   max-width: 960px;
+}
+
+.page-content {
+  margin-block: clamp(1.5rem, 4vw, 2.5rem) 1.5rem;
+}
+
+.distill {
+  margin-bottom: 1.5rem;
 }
 
 .profile img {
@@ -140,6 +153,37 @@ li,
 span,
 strong {
   color: var(--global-text-color);
+}
+
+.page-content :where(h1, h2, h3, h4, h5, h6),
+.distill :is(d-title, d-article) :where(h1, h2, h3, h4, h5, h6) {
+  font-weight: 400;
+  line-height: 1.25;
+}
+.page-content h1,
+.distill :is(d-title, d-article) h1 {
+  font-size: clamp(1.65rem, 1.45rem + 1vw, 2rem);
+  font-weight: 300;
+}
+.page-content h2,
+.distill :is(d-title, d-article) h2 {
+  font-size: 1.375rem;
+}
+.page-content h3,
+.distill :is(d-title, d-article) h3 {
+  font-size: 1.1875rem;
+}
+.page-content h4,
+.distill :is(d-title, d-article) h4 {
+  font-size: 1.0625rem;
+}
+.page-content h5,
+.distill :is(d-title, d-article) h5 {
+  font-size: 1rem;
+}
+.page-content h6,
+.distill :is(d-title, d-article) h6 {
+  font-size: 0.9375rem;
 }
 
 hr {
@@ -190,6 +234,12 @@ blockquote {
 .equation {
   margin-bottom: 1rem;
   text-align: center;
+}
+
+.plotly-chart {
+  width: 100%;
+  min-width: 0;
+  margin-block: 1rem;
 }
 
 .caption {
@@ -252,7 +302,7 @@ blockquote {
   }
 }
 .post-description {
-  margin-bottom: 2rem;
+  margin-bottom: 0;
   font-size: 0.875rem;
 }
 .post-description a {
@@ -450,10 +500,12 @@ footer.fixed-bottom a:hover {
 }
 
 footer.sticky-bottom {
+  flex-shrink: 0;
+  margin-top: auto;
   border-top: 1px solid var(--global-divider-color);
-  padding-top: 40px;
-  padding-bottom: 40px;
-  font-size: 0.9rem;
+  padding-block: 1rem;
+  font-size: 0.875rem;
+  line-height: 1.4;
 }
 
 .cv {
@@ -506,15 +558,19 @@ footer.sticky-bottom {
 }
 
 .post-list {
-  margin: 0;
-  margin-bottom: 40px;
+  margin: 0 0 1.5rem;
   padding: 0;
 }
 .post-list li {
   border-bottom: 1px solid var(--global-divider-color);
   list-style: none;
-  padding-top: 2rem;
-  padding-bottom: 2rem;
+  padding-block: 1rem;
+}
+.post-list li h3 {
+  font-size: 1.25rem;
+}
+.post-list li p {
+  margin-bottom: 0.5rem;
 }
 .post-list li .post-meta {
   color: var(--global-text-color-light);
@@ -526,6 +582,7 @@ footer.sticky-bottom {
   font-size: 0.875rem;
   padding-top: 0.25rem;
   padding-bottom: 0;
+  margin-bottom: 0;
 }
 .post-list li a {
   color: var(--global-text-color);
@@ -542,8 +599,10 @@ footer.sticky-bottom {
   color: #000000;
 }
 .pagination .page-item.active .page-link {
-  color: #ffffff;
+  color: var(--global-bg-color);
   background-color: var(--global-theme-color);
+  border-color: var(--global-theme-color);
+  box-shadow: none;
 }
 .pagination .page-item.active .page-link:hover {
   background-color: var(--global-theme-color);
@@ -633,7 +692,7 @@ footer.sticky-bottom {
   padding-right: 1rem;
 }
 .publications ol.bibliography li .abbr abbr a {
-  color: white;
+  color: var(--global-bg-color);
 }
 .publications ol.bibliography li .abbr abbr a:hover {
   text-decoration: none;
@@ -834,6 +893,32 @@ html.transition *:after {
   transition-delay: 0 !important;
 }
 
+.post-icon {
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.125em;
+}
+
+.post-list .post-tags .post-icon,
+.tag-list .post-icon {
+  font-size: 0.85em;
+}
+
+.post > .post-header {
+  margin-bottom: 1.25rem;
+}
+.post > article > :is(h1, h2, h3, h4, h5, h6):not(:first-child) {
+  margin-top: 1.5rem;
+}
+.post > article > :is(h1, h2, h3, h4, h5, h6) + :is(h1, h2, h3, h4, h5, h6) {
+  margin-top: 0.625rem;
+}
+.post .about-intro {
+  margin-top: 1.25rem;
+}
+.post > article > h2.latest-posts-heading {
+  margin-top: 5rem;
+}
 .post > .post-header .post-heading {
   align-items: baseline;
   display: flex;
@@ -841,15 +926,22 @@ html.transition *:after {
   justify-content: space-between;
 }
 .post > .post-header .post-title {
+  margin-bottom: 0.375rem;
+  overflow-wrap: anywhere;
+}
+.post > .post-header .post-title .post-icon {
+  color: var(--global-text-color-light);
+  font-size: 0.65em;
+  vertical-align: 0.05em;
+}
+.post > .post-header .post-heading .post-title {
   margin-bottom: 0;
 }
 .post > .post-header .post-meta {
   color: var(--global-text-color-light);
   font-size: 0.875rem;
-  flex: 0 0 auto;
   margin-bottom: 0;
   text-align: right;
-  white-space: nowrap;
 }
 .post > .post-header .post-tags {
   align-items: center;
@@ -857,9 +949,11 @@ html.transition *:after {
   display: flex;
   flex-wrap: wrap;
   font-size: 0.875rem;
-  gap: 0.25rem 0.75rem;
-  padding-top: 0.5rem;
-  padding-bottom: 1rem;
+  gap: 0.25rem 0.625rem;
+  margin: 0.5rem 0 0;
+}
+.post > .post-header .post-tags .post-icon {
+  font-size: 0.85em;
 }
 .post > .post-header .post-tags a {
   color: var(--global-text-color-light);
@@ -871,9 +965,20 @@ html.transition *:after {
 .post > .post-header .post-tags .post-meta-separator {
   color: var(--global-text-color-light);
 }
+.post .post-content {
+  line-height: 1.65;
+}
+.post .post-content > :is(p, ul, ol) {
+  margin-bottom: 0.875rem;
+}
 .post .post-content blockquote {
-  border-left: 5px solid var(--global-theme-color);
-  padding: 8px;
+  border-left: 2px solid var(--global-divider-color);
+  margin: 1rem 0;
+  padding: 0.125rem 0.875rem;
+  font-size: inherit;
+}
+.post .post-content blockquote > :last-child {
+  margin-bottom: 0;
 }
 @media (max-width: 576px) {
   .post > .post-header .post-heading {
