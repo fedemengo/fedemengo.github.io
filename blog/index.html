@@ -2,15 +2,15 @@
 layout: default
 title: blog
 pagination:
-  enabled: true
+  enabled: false # Change to true to show five posts per page.
   collection: posts
   permalink: /page/:num/
   per_page: 5
   sort_field: date
   sort_reverse: true
   trail:
-    before: 1 # The number of links before the current page
-    after: 3  # The number of links after the current page
+    before: 1
+    after: 3
 ---
 
 <div class="post">
@@ -29,8 +29,12 @@ pagination:
   </div>
   {% endif %}
 
+  {% assign listed_posts = site.posts %}
+  {% if page.pagination.enabled %}
+    {% assign listed_posts = paginator.posts %}
+  {% endif %}
   <ul class="post-list">
-    {% for post in paginator.posts %}
+    {% for post in listed_posts %}
     {% if post.hidden %}
       {% continue %}
     {% endif %}
@@ -89,6 +93,7 @@ pagination:
     {% endfor %}
   </ul>
 
-  {% include pagination.html %}
-
+  {% if page.pagination.enabled %}
+    {% include pagination.html %}
+  {% endif %}
 </div>
